@@ -1,0 +1,128 @@
+
+
+stages:          # List of stages for jobs, and their order of execution
+  - build-base
+  - test
+  - build
+  - build-images
+  - tag-uat
+  - deploy
+
+build-nodejs-image:
+  stage: build-base
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    # ตัวแปรสำหรับ GitLab Container Registry
+    BASE_IMAGE_TAG: $CI_REGISTRY_IMAGE/base:latest
+  script:
+    # ล็อกอินเข้า GitLab Container Registry
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    # สร้าง Docker image จาก Dockerfile
+    - docker build -t $BASE_IMAGE_TAG -f Dockerfile.base .
+    # Push image ไปยัง GitLab Container Registry
+    - docker push $BASE_IMAGE_TAG
+  only:
+    changes:
+      - package.json
+      - package*.json
+      - Dockerfile.base
+  except:
+    - tags
+
+unit-test:
+  stage: test
+  image: registry.gitlab.com/pea-training/course-catalog-app/base:latest
+  script:
+    #- cp -R /app/node_modules ./node_module
+    - ls
+    - yarn install
+    - ls
+    - yarn test
+  except:
+    - tags
+  
+build-app:
+  stage: build
+  image: registry.gitlab.com/pea-training/course-catalog-app/base:latest
+  script:
+    #- cp -R /app/node_modules ./node_module
+    - yarn install
+    - yarn run build
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}   # กำหนด key โดยใช้ชื่อ branch
+    paths:
+      - dist
+  artifacts:
+    expire_in: 2 hours
+    paths:
+      - dist
+  except:
+    - tags
+
+build-images:
+  stage: build-images
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  script:
+    - ls
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build -t  $IMAGE_TAG -f Dockerfile .
+    - docker push $IMAGE_TAG
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}   # กำหนด key โดยใช้ชื่อ branch
+    paths:
+      - dist
+  except:
+    - tags
+
+tag-uat:
+  stage: tag-uat
+  image: docker:24.0.2
+  services:
+    - docker:24.0.2-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    IMAGE_TAG_UAT: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+  script:
+    - ls
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker tag $IMAGE_TAG $IMAGE_TAG_UAT
+    - docker push $IMAGE_TAG_UAT
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}   # กำหนด key โดยใช้ชื่อ branch
+    paths:
+      - dist
+  only:
+   - /^uat-\d+\.\d+\.\d+$/  # Triggers for tags like uat-1.0.0, uat-2.1.3, etc
+
+
+update-deploy-dev-tag:
+  stage: deploy
+  variables:
+    UPSTREAM_APP_NAME: app
+    UPSTREAM_DEPLOY_TAG: $CI_COMMIT_SHORT_SHA
+    UPSTREAM_ENV: dev
+  trigger:
+    project: pea-training/course-catalog-deployment
+    branch: main
+    strategy: depend
+  except:
+    - tags
+
+update-deploy-uat-tag:
+  stage: deploy
+  variables:
+    UPSTREAM_APP_NAME: app
+    UPSTREAM_DEPLOY_TAG: $CI_COMMIT_TAG
+    UPSTREAM_ENV: uat
+  trigger:
+    project: pea-training/course-catalog-deployment
+    branch: main
+    strategy: depend
+  only:
+   - /^uat-\d+\.\d+\.\d+$/  # Triggers for tags like uat-1.0.0, uat-2.1.3, etc
