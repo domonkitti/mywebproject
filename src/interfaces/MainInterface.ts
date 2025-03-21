@@ -41,3 +41,11 @@ interface BudgetCategory {
   ผูกพัน: number; // งบประมาณผูกพัน
   ลงทุน: number; // งบประมาณลงทุน
 }
+
+export interface FormRow {
+  name: string;
+  item: string;
+  size: string;
+  amount: string;
+  reason: string;
+}
