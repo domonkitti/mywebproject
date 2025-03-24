@@ -2,6 +2,7 @@ import { Table } from "flowbite-react";
 import { ProjectForFrontEnd } from "../interfaces/MainInterface";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 
 interface ProjectTableProps {
   projects: ProjectForFrontEnd[];
@@ -50,9 +51,11 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
               </Table.Cell>
               <Table.Cell className="text-right border border-gray-400 px-4">
                 <div className="flex flex-row justify-center space-x-3">
-                  <button className="bg-green-200 p-2 rounded-full text-green-600 hover:bg-green-300">
+                  <Link
+                    to={`/editproject/${project.projectId}`}
+                    className="bg-green-200 p-2 rounded-full text-green-600 hover:bg-green-300">
                     <IoPencil className="h-5 w-5" />
-                  </button>
+                  </Link>
                   <button className="bg-red-200 p-2 rounded-full text-red-600 hover:bg-red-300">
                     <IoTrash className="h-5 w-5" />
                   </button>

@@ -1,20 +1,19 @@
 import { Component, useState } from "react";
-import Form004_1 from "../components/CreateForm/004-1";
-import Form004_2 from "../components/CreateForm/004-2";
-import Form004_4main from "../components/CreateForm/004-4main";
-import Form005_1 from "../components/CreateForm/005-1";
-import Form006 from "../components/CreateForm/006";
-import Form005_2 from "../components/CreateForm/005-2";
-import Form005_3 from "../components/CreateForm/005-3";
-import Form005_4 from "../components/CreateForm/005-4";
+import { useNavigate } from "react-router-dom";
+import Form004_4main from "../components/EditForm/004-4main";
+import Form005_1 from "../components/EditForm/005-1";
+import Form006 from "../components/EditForm/006";
+import Form005_2 from "../components/EditForm/005-2";
+import Form005_3 from "../components/EditForm/005-3";
+import Form005_4 from "../components/EditForm/005-4";
 
-export default function TabForm() {
-  const [activeTab, setActiveTab] = useState("004-1");
+export default function TabFormNum() {
+  const [activeTab, setActiveTab] = useState("004-4");
   const [activeSubTab, setActiveSubTab] = useState("");
+  const navigate = useNavigate();
+  
 
   const tabs = [
-    { name: "004-1", component: <Form004_1 /> },
-    { name: "004-2", component: <Form004_2 /> },
     { name: "004-4", component: <Form004_4main />},
     { name: "005",
       subTabs: [
@@ -29,8 +28,19 @@ export default function TabForm() {
 
   const currentTab = tabs.find((t) => t.name === activeTab);
 
+
   return (
+    
     <div>
+      {/* Back Button */}
+      <div className="p-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+        >
+          ← กลับ
+        </button>
+      </div>      
       {/* Main Tabs */}
       <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200">
         <ul className="flex flex-wrap -mb-px">
@@ -55,8 +65,8 @@ export default function TabForm() {
 
       {/* Sub Tabs */}
       {currentTab?.subTabs && (
-        <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200 mt-2">
-          <ul className="flex flex-wrap -mb-px justify-center">
+        <div className="text-sm font-medium text-left text-gray-500 border-b border-gray-200 mt-2">
+          <ul className="flex flex-wrap -mb-px justify-left">
             {currentTab.subTabs.map((sub) => (
               <li
                 key={sub.name}

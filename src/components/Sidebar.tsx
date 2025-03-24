@@ -67,19 +67,29 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                 </li>
                 <li>
                   <a
-                    href="/CreateClass"
+                    href="/newproject"
                     className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/CreateClass" ? "text-blue-600 bg-gray-200" : "text-black"
+                      location.pathname === "/newproject" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
-                    🏗 <span className="ml-3">Create New</span>
+                    🏗 <span className="ml-3">สร้างโปรเจ็คใหม่</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/editproject"
+                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
+                      location.pathname === "/editproject" ? "text-blue-600 bg-gray-200" : "text-black"
+                    }`}
+                  >
+                    🏗 <span className="ml-3">EditProjectปกติอันนี้ไม่โชว์</span>
                   </a>
                 </li>
                 <li>
                   <a
                     href="/allprojects"
                     className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/CompanyEnrolled" ? "text-blue-600 bg-gray-200" : "text-black"
+                      location.pathname === "/allprojects" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
                     📜 <span className="ml-3">งบประมาณที่ขอตั้ง</span>
