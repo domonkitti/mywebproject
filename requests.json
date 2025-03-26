@@ -13,6 +13,20 @@
         "Jane Smith"
       ],
       "status": "รอดำเนินการ"
+    },
+    {
+      "id": "2",
+      "projectId": "P002",
+      "projectName": "โครงการพัฒนา IT",
+      "departmentName": "ฝ่ายเทคโนโลยี",
+      "startDate": "2024-01-01",
+      "endDate": "2024-12-31",
+      "budgetTotal": 2000000,
+      "managerName": [
+        "John Doe",
+        "Jane Smith"
+      ],
+      "status": "กำลังพิจารณา"
     }
   ]
 }
