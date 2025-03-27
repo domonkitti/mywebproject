@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Table } from "flowbite-react";
 import { approveProject, rejectProject, getProjectRequests } from "../apis/ProjectApi";
 import { ProjectForFrontEnd } from "../interfaces/MainInterface";
-import dayjs from "dayjs";
 import ConfirmApprove from "../components/AdminEdit/ConfirmApprove";
+import dayjs from "dayjs";
 
 const formatDate = (date: Date | string) => dayjs(date).format("DD/MM/YYYY");
 
@@ -14,14 +13,10 @@ const ReviewingProjectPage = () => {
 
   useEffect(() => {
     getProjectRequests().then((data) => {
-      const filteredData = data
-        .filter((project: ProjectForFrontEnd) => project.status === "กำลังพิจารณา")
-        .map((p) => ({
-          ...p,
-          startDate: new Date(p.startDate),
-          endDate: new Date(p.endDate),
-        }));
-      setProjects(filteredData);
+      const filtered = data
+        .filter((p) => p.status === "กำลังพิจารณา")
+        .map((p) => ({ ...p, startDate: new Date(p.startDate), endDate: new Date(p.endDate) }));
+      setProjects(filtered);
     });
   }, []);
 
@@ -48,48 +43,53 @@ const ReviewingProjectPage = () => {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <h1 className="text-2xl font-bold text-center mb-10">โครงการที่กำลังพิจารณา</h1>
-      <Table striped>
-        <Table.Head className="bg-gray-100 text-gray-700">
-          <Table.HeadCell className="text-center">ชื่อโครงการ</Table.HeadCell>
-          <Table.HeadCell className="text-center">หน่วยงาน</Table.HeadCell>
-          <Table.HeadCell className="text-center">วันที่เริ่มต้น</Table.HeadCell>
-          <Table.HeadCell className="text-center">วันที่สิ้นสุด</Table.HeadCell>
-          <Table.HeadCell className="text-center">งบประมาณ</Table.HeadCell>
-          <Table.HeadCell className="text-center">สถานะ</Table.HeadCell>
-          <Table.HeadCell className="text-center">จัดการ</Table.HeadCell>
-        </Table.Head>
-        <Table.Body className="divide-y border border-gray-400">
+    <div className="p-4">
+      <h1 className="text-2xl font-bold text-center mb-6">โครงการที่กำลังพิจารณา</h1>
+      <table className="w-full border text-sm">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border px-4 py-2 text-center">ชื่อโครงการ</th>
+            <th className="border px-4 py-2 text-center">หน่วยงาน</th>
+            <th className="border px-4 py-2 text-center">วันที่เริ่มต้น</th>
+            <th className="border px-4 py-2 text-center">วันที่สิ้นสุด</th>
+            <th className="border px-4 py-2 text-center">งบประมาณ</th>
+            <th className="border px-4 py-2 text-center">สถานะ</th>
+            <th className="border px-4 py-2 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
           {projects.map((project) => (
-            <Table.Row key={project.projectId}>
-              <Table.Cell className="text-left border px-4">{project.projectName}</Table.Cell>
-              <Table.Cell className="text-left border px-4">{project.departmentName}</Table.Cell>
-              <Table.Cell className="text-center border px-4">{formatDate(project.startDate)}</Table.Cell>
-              <Table.Cell className="text-center border px-4">{formatDate(project.endDate)}</Table.Cell>
-              <Table.Cell className="text-center border px-4">{(project.budgetTotal ?? 0).toLocaleString()} บาท</Table.Cell>
-              <Table.Cell className="text-center border px-4 font-bold">{project.status}</Table.Cell>
-              <Table.Cell className="text-center border px-4">
+            <tr key={project.projectId} className="text-center">
+              <td className="border px-4 py-2">{project.projectName}</td>
+              <td className="border px-4 py-2">{project.departmentName}</td>
+              <td className="border px-4 py-2">{formatDate(project.startDate)}</td>
+              <td className="border px-4 py-2">{formatDate(project.endDate)}</td>
+              <td className="border px-4 py-2">{project.budgetTotal?.toLocaleString()} บาท</td>
+              <td className="border px-4 py-2 font-bold">{project.status}</td>
+              <td className="border px-4 py-2">
                 <button
-                  className="bg-blue-200 p-2 rounded text-blue-700 hover:bg-blue-300"
+                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                   onClick={() => openModal(project)}
                 >
                   ✅ Approve
                 </button>
-              </Table.Cell>
-            </Table.Row>
+              </td>
+            </tr>
           ))}
-        </Table.Body>
-      </Table>
+        </tbody>
+      </table>
 
-      {selectedProject && (
-        <ConfirmApprove
-          isOpen={isModalOpen}
-          project={selectedProject}
-          onClose={closeModal}
-          onApprove={handleApprove}
-          onReject={handleReject}
-        />
+      {/* ✅ Modal แสดงเมื่อเปิดเท่านั้น */}
+      {isModalOpen && selectedProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <ConfirmApprove
+            isOpen={isModalOpen}
+            project={selectedProject}
+            onClose={closeModal}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        </div>
       )}
     </div>
   );
