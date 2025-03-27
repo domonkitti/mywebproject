@@ -1,11 +1,11 @@
 import { Component, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Form004_4main from "../components/EditForm/004-4main";
-import Form005_1 from "../components/EditForm/005-1";
-import Form006 from "../components/EditForm/006";
-import Form005_2 from "../components/EditForm/005-2";
-import Form005_3 from "../components/EditForm/005-3";
-import Form005_4 from "../components/EditForm/005-4";
+import Form004_4main from "../../components/EditForm/004-4main";
+import Form005_1 from "../../components/EditForm/005-1";
+import Form006 from "../../components/EditForm/006";
+import Form005_2 from "../../components/EditForm/005-2";
+import Form005_3 from "../../components/EditForm/005-3";
+import Form005_4 from "../../components/EditForm/005-4";
 
 export default function TabFormNum() {
   const [activeTab, setActiveTab] = useState("004-4");

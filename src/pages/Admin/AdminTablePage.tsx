@@ -1,4 +1,4 @@
-import BudgetTable from "../components/AdminEdit/Table";
+import BudgetTable from "../../components/AdminEdit/Table";
 
 
 const AdminTablePage = () => {

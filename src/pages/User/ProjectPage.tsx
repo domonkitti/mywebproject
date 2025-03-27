@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import ProjectTable from "../components/ProjectTable";
-import { getProjectRequests } from "../apis/ProjectApi";
-import { ProjectForFrontEnd } from "../interfaces/MainInterface";
+import ProjectTable from "../../components/ProjectTable";
+import { getProjectRequests } from "../../apis/ProjectApi";
+import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
 
 const ProjectPage = () => {
   const [projects, setProjects] = useState<ProjectForFrontEnd[]>([]);

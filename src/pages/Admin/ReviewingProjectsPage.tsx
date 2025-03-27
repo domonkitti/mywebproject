@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getProjectRequests } from "../apis/ProjectApi";
-import { ProjectForFrontEnd } from "../interfaces/MainInterface";
+import { getProjectRequests } from "../../apis/ProjectApi";
+import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom"; // ✅ เพิ่ม import นี้เข้ามา
 

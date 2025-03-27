@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table } from "flowbite-react";
-import { getReviewedProjects } from "../apis/ProjectApi";
-import { ProjectForFrontEnd } from "../interfaces/MainInterface";
+import { getReviewedProjects } from "../../apis/ProjectApi";
+import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
 import dayjs from "dayjs";
 
 const formatDate = (date: Date | string) => dayjs(date).format("DD/MM/YYYY");
