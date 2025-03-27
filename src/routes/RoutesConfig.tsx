@@ -9,6 +9,7 @@ import NewProject from '../pages/NewProject.tsx'
 import SelectDataType from '../components/EditForm/SelectDataType.tsx'
 import TabFormBasic from '../pages/EditProjectsBasic.tsx'
 import TabFormNum from '../pages/EditProjectsNum.tsx'
+import ConfirmApprove from '../pages/ConfirmApprove.tsx'
 
 function RoutesConfig() {
   return (
@@ -23,6 +24,7 @@ function RoutesConfig() {
       <Route path="/waitingprojects" element={<WaitingProjectPage />} />
       <Route path="/edittable" element={<AdminTablePage />} />
       <Route path="/newproject" element={<NewProject />} />
+      <Route path="/ConfirmApprove/:projectId" element={<ConfirmApprove />} />
     </Routes>
   )
 }

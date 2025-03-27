@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { approveProject, rejectProject, getProjectRequests } from "../apis/ProjectApi";
+import { getProjectRequests } from "../apis/ProjectApi";
 import { ProjectForFrontEnd } from "../interfaces/MainInterface";
-import ConfirmApprove from "../components/AdminEdit/ConfirmApprove";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom"; // ✅ เพิ่ม import นี้เข้ามา
 
 const formatDate = (date: Date | string) => dayjs(date).format("DD/MM/YYYY");
 
 const ReviewingProjectPage = () => {
   const [projects, setProjects] = useState<ProjectForFrontEnd[]>([]);
-  const [selectedProject, setSelectedProject] = useState<ProjectForFrontEnd | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     getProjectRequests().then((data) => {
@@ -19,28 +17,6 @@ const ReviewingProjectPage = () => {
       setProjects(filtered);
     });
   }, []);
-
-  const handleApprove = async (project: ProjectForFrontEnd) => {
-    await approveProject(project);
-    setProjects((prev) => prev.filter((p) => p.projectId !== project.projectId));
-    closeModal();
-  };
-
-  const handleReject = async (projectId: string) => {
-    await rejectProject(projectId);
-    setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-    closeModal();
-  };
-
-  const openModal = (project: ProjectForFrontEnd) => {
-    setSelectedProject(project);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setSelectedProject(null);
-    setIsModalOpen(false);
-  };
 
   return (
     <div className="p-4">
@@ -67,30 +43,17 @@ const ReviewingProjectPage = () => {
               <td className="border px-4 py-2">{project.budgetTotal?.toLocaleString()} บาท</td>
               <td className="border px-4 py-2 font-bold">{project.status}</td>
               <td className="border px-4 py-2">
-                <button
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  onClick={() => openModal(project)}
+                <Link
+                  to={`/ConfirmApprove/${project.projectId}`}
+                  className="bg-green-200 p-2 rounded-full text-green-600 hover:bg-green-300"
                 >
                   ✅ Approve
-                </button>
+                </Link>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* ✅ Modal แสดงเมื่อเปิดเท่านั้น */}
-      {isModalOpen && selectedProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <ConfirmApprove
-            isOpen={isModalOpen}
-            project={selectedProject}
-            onClose={closeModal}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </div>
-      )}
     </div>
   );
 };
