@@ -8,3 +8,10 @@
 .buttonPrimary {
   @apply px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700;
 }
+.percentage {
+  width: 100px; /* กำหนดความกว้าง */
+  padding: 8px; /* กำหนด padding */
+  border: 1px solid #ccc; /* สีขอบ */
+  border-radius: 10px; /* มุมโค้งมน */
+  height: 20px
+}

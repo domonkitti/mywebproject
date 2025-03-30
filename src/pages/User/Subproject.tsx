@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { Link } from "react-router-dom";
 
 interface SubProject {
@@ -12,7 +12,7 @@ const CreateSubprojectPage = () => {
     { id: 1, name: "งานย่อย A-1", totalBudget: 150000 },
     { id: 2, name: "งานย่อย A-2", totalBudget: 120000 },
   ]);
-  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [newName, setNewName] = useState("");
   const [newBudget, setNewBudget] = useState(0);
 
@@ -32,16 +32,9 @@ const CreateSubprojectPage = () => {
     setSubProjects((prev) => prev.filter((sp) => sp.id !== id));
   };
 
-  const handleEdit = (id: number) => {
-    setEditingId(id);
-  };
 
-  const handleSave = (id: number, name: string, totalBudget: number) => {
-    setSubProjects((prev) =>
-      prev.map((sp) => (sp.id === id ? { ...sp, name, totalBudget } : sp))
-    );
-    setEditingId(null);
-  };
+
+
 
   const totalSum = subProjects.reduce((sum, sp) => sum + sp.totalBudget, 0);
 

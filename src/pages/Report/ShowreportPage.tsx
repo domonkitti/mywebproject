@@ -1,7 +1,7 @@
-import BudgetTable from "../../components/AdminEdit/Table";
+import BudgetTable from "../../components/report/Reportprojects";
 
 
-const AdminTablePage = () => {
+const AllreportsPage = () => {
   return (
     <div>
       <h1 className="text-2xl font-bold text-center mb-10">สรุปงบประมาณโครงการ (Admin)</h1>
@@ -10,4 +10,4 @@ const AdminTablePage = () => {
   );
 };
 
-export default AdminTablePage;
+export default AllreportsPage;

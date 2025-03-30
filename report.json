@@ -1,0 +1,47 @@
+projectId: P001,
+projectName: "โครงการ A",
+departmentName: "ฝ่าย A",
+subProjects: [
+  {
+    subProjectId: 11,
+    subProjectName: "งานย่อย A-1",
+    budgetPlan: [
+      {
+        year: 2024,
+        budgetAllocated: {
+          ผูกพัน: { เงินกู้: 100000, เงินรายได้: 50000 },
+          ลงทุน: { เงินกู้: 200000, เงินรายได้: 100000 },
+        },
+        budgetUsage: {
+          ผูกพัน: { เงินกู้: 50000, เงินรายได้: 25000 },
+          ลงทุน: { เงินกู้: 150000, เงินรายได้: 75000 },
+        },
+      },
+    ],
+  },
+  {
+    subProjectId: 12,
+    subProjectName: "งานย่อย A-2",
+    budgetPlan: [
+      {
+        year: 2024,
+        budgetAllocated: {
+          ผูกพัน: { เงินกู้: 60000, เงินรายได้: 30000 },
+          ลงทุน: { เงินกู้: 100000, เงินรายได้: 50000 },
+        },
+        budgetUsage: {
+          ผูกพัน: { เงินกู้: 30000, เงินรายได้: 15000 },
+          ลงทุน: { เงินกู้: 80000, เงินรายได้: 30000 },
+        },
+      },
+    ],
+  },
+],
+};
+};
+projectId: P002,
+projectName: "โครงการ B",
+departmentName: "ฝ่าย B",
+subProjects: [],
+};
+};

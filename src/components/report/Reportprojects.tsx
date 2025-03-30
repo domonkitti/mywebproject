@@ -4,7 +4,8 @@ import { getReviewedProjects } from "../../apis/ProjectApi";
 import { ProjectTable } from "../../interfaces/MainInterface";
 import { IoPencil } from "react-icons/io5";
 import React from "react";
-import EditProjectModal from "./EditProjectModal";
+import EditProjectModal from "../AdminEdit/EditProjectModal";
+import { Link } from 'react-router-dom';  // Add this import at the top
 
 // ฟังก์ชันจัดรูปแบบตัวเลข
 const formatNumber = (num: number) => num.toLocaleString();
@@ -123,9 +124,9 @@ const BudgetTable = () => {
             <Table.Row key={project.projectId} className="border border-gray-400">
               {/* 🔹 คอลัมน์: ชื่อโครงการ & หน่วยงาน */}
               <Table.Cell className="text-left border border-gray-400 px-4 font-bold">
-                <button onClick={() => handleEditClick(project)} className="mr-2 text-blue-600 hover:text-blue-800">
+                <Link to={`/editreport/${project.projectId}`} className="mr-2 text-blue-600 hover:text-blue-800">
                   <IoPencil size={18} />
-                </button>
+                </Link>
                 {project.projectName}
                 <div className="text-sm text-gray-600">
                   <span>เงินกู้: </span> 

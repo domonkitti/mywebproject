@@ -49,6 +49,11 @@ const ReviewingProjectPage = () => {
                 >
                   ✅ Approve
                 </Link>
+                <Link
+                  to={`/RejectProject/${project.projectId}`}
+                  className="bg-red-200 p-2 rounded-full text-red-600 hover:bg-red-300 ml-2">
+                  ❌ Reject
+                </Link>
               </td>
             </tr>
           ))}

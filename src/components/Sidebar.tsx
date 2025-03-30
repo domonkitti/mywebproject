@@ -17,6 +17,10 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   const [isUnitOpen, setIsUnitOpen] = useState(() => {
     return localStorage.getItem("isUnitOpen") !== "false"; // default: true
   });
+  const [isReportOpen, setIsReportOpen] = useState(() => {
+    return localStorage.getItem("isReportOpen") === "true";
+  });
+
 
   // ✅ บันทึกค่าลง localStorage ทุกครั้งที่มีการเปลี่ยนค่า
   useEffect(() => {
@@ -26,6 +30,10 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
   useEffect(() => {
     localStorage.setItem("isUnitOpen", String(isUnitOpen));
   }, [isUnitOpen]);
+  useEffect(() => {
+    localStorage.setItem("isReportOpen", String(isReportOpen));
+  }, [isReportOpen]);
+
 
   return (
     <>
@@ -50,21 +58,12 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
               onClick={() => setIsUnitOpen(!isUnitOpen)}
               className="w-full text-left text-gray-900 p-2 font-semibold hover:bg-gray-100 flex justify-between"
             >
-              หน่วยงาน
+              งบประมาณประจำปี
+              <br />(หน่วยงาน)
               <span>{isUnitOpen ? "▲" : "▼"}</span>
             </button>
             {isUnitOpen && (
               <ul className="space-y-2 font-medium pl-4">
-                <li>
-                  <a
-                    href="/AllClass"
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/AllClass" ? "text-blue-600 bg-gray-200" : "text-black"
-                    }`}
-                  >
-                    📚 <span className="ml-3">AllProject</span>
-                  </a>
-                </li>
                 <li>
                   <a
                     href="/newproject"
@@ -75,16 +74,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                     🏗 <span className="ml-3">สร้างโปรเจ็คใหม่</span>
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/editproject"
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/editproject" ? "text-blue-600 bg-gray-200" : "text-black"
-                    }`}
-                  >
-                    🏗 <span className="ml-3">EditProjectปกติอันนี้ไม่โชว์</span>
-                  </a>
-                </li>
+
                 <li>
                   <a
                     href="/allprojects"
@@ -92,7 +82,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                       location.pathname === "/allprojects" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
-                    📜 <span className="ml-3">งบประมาณที่ขอตั้ง</span>
+                    📚 <span className="ml-3">งบประมาณที่ขอตั้ง</span>
                   </a>
                 </li>
               </ul>
@@ -117,7 +107,51 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                       location.pathname === "/reviewingprojects" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
-                    📜 <span className="ml-3">Reviewing projects</span>
+                    📜 <span className="ml-3">หน่วยงานส่งมารออนุมัติ</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/waitingprojects"
+                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
+                      location.pathname === "/waitingprojects" ? "text-blue-600 bg-gray-200" : "text-black"
+                    }`}
+                  >
+                    📜 <span className="ml-3">งบที่ตั้งปี 2569</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/Settings"
+                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
+                      location.pathname === "/Settings" ? "text-blue-600 bg-gray-200" : "text-black"
+                    }`}
+                  >
+                    ⚙️ <span className="ml-3">Settings</span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </div>
+          {/* === report === */}
+          <div className="mt-4 border-t border-gray-300 pt-2">
+            <button
+              onClick={() => setIsReportOpen(!isReportOpen)}
+              className="w-full text-left text-gray-900 p-2 font-semibold hover:bg-gray-100 flex justify-between"
+            >
+              ส่วนของ 9 ช่อง
+              <span>{isReportOpen ? "▲" : "▼"}</span>
+            </button>
+            {isReportOpen && (
+              <ul className="space-y-2 font-medium pl-4">
+                <li>
+                  <a
+                    href="/allreportspage"
+                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
+                      location.pathname === "/allreportspage" ? "text-blue-600 bg-gray-200" : "text-black"
+                    }`}
+                  >
+                    📜 <span className="ml-3">9ช่อง</span>
                   </a>
                 </li>
                 <li>
@@ -128,16 +162,6 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                     }`}
                   >
                     📜 <span className="ml-3">waitingprojects</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/ManageUsers"
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/ManageUsers" ? "text-blue-600 bg-gray-200" : "text-black"
-                    }`}
-                  >
-                    👤 <span className="ml-3">Manage Users</span>
                   </a>
                 </li>
                 <li>

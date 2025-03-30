@@ -17,11 +17,11 @@ export default function Form004_1() {
             <label className="block font-medium">2.1 ผู้รับผิดชอบ</label>
             <div className="flex space-x-2">
               <span>แผนก</span>
-              <input type="text" className="input-field w-32" />
+              <input type="text" className="input-field w-32"placeholder="ทำ dropdown" />
               <span>กอง</span>
-              <input type="text" className="input-field w-32" />
+              <input type="text" className="input-field w-32"placeholder="ทำ dropdown" />
               <span>ฝ่าย</span>
-              <input type="text" className="input-field w-32" />
+              <input type="text" className="input-field w-32"placeholder="ทำ dropdown" />
             </div>
             <div className="mt-2">
               <span>สายงาน</span>
@@ -32,7 +32,7 @@ export default function Form004_1() {
   
         {/* 2.2 ความจำเป็นในการดำเนินงาน */}
         <div className="mt-4">
-          <label className="block font-medium">2.2 ความจำเป็นในการดำเนินงาน</label>
+          <label className="block font-medium">2.2 ความจำเป็นในการดำเนินงาน(จะเป็นแบบนี้ไปทุกปีไหม?)</label>
           <div className="ml-4 space-y-1">
             <div>
               <input type="checkbox" /> มีสัญญา ข้อผูกพัน หรือมีเงื่อนไขที่ต้องดำเนินการ
@@ -51,7 +51,7 @@ export default function Form004_1() {
   
         {/* 2.3 แผนการทำงาน */}
         <div className="mt-4">
-          <label className="block font-medium">2.3 แผนการทำงาน</label>
+          <label className="block font-medium">2.3 ประเภทการลงทุน(ประเภทจะใช้แบบนี้ไหม)</label>
           <div className="ml-4 space-y-1">
             <div>
               <input type="checkbox" /> งานก่อสร้าง ขยายเขตและปรับปรุงระบบจำหน่าย
@@ -78,8 +78,8 @@ export default function Form004_1() {
         <div className="mt-4">
           <label className="block font-medium">2.4 สถานะของงาน</label>
           <div className="ml-4">
-            <input type="checkbox" /> งานต่อเนื่อง
-            <input type="checkbox" className="ml-4" /> งานใหม่
+          <input type="checkbox" /> งานต่อเนื่อง<br />(อันนี้ต้องพิจารณาว่าจะให้เขาไปแก้ไขของเดิมหรือให้เขาทำใหม่ตรงนี้เลย)<br />
+          <input type="checkbox" /> งานใหม่
           </div>
         </div>
   
@@ -88,13 +88,13 @@ export default function Form004_1() {
           <label className="block font-medium">2.5 สถานะการอนุมัติ</label>
           <div className="ml-4 space-y-1">
             <div>
-              <input type="checkbox" /> ผวก. ลงนาม วันที่ 
+              <input type="checkbox" /> ผวก. ลงนาม วันที่ ............
             </div>
             <div>
-              <input type="checkbox" /> คณะกรรมการ กฟภ. วันที่
+              <input type="checkbox" /> คณะกรรมการ กฟภ. วันที่ ...........
             </div>
             <div>
-              <input type="checkbox" /> คณะรัฐมนตรี วันที่
+              <input type="checkbox" /> คณะรัฐมนตรี วันที่ .............
             </div>
           </div>
         </div>
@@ -130,6 +130,10 @@ export default function Form004_1() {
             </div>
             <div>
               <span>เป้าหมายการเบิกจ่ายงบลงทุนปี 2569</span>
+              <input type="text" className="input-field w-16 h-8 p-1 text-center border border-gray-300 rounded-md" /> บาท
+            </div>
+            <div>
+              <span>วงเงิน งบทำการ ที่ขอตั้งในปี 2569 (ถ้ามี)</span>
               <input type="text" className="input-field w-16 h-8 p-1 text-center border border-gray-300 rounded-md" /> บาท
             </div>
           </div>
