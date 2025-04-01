@@ -144,6 +144,12 @@ const WaitingProjectPage = () => {
           </Table.Body>
         </Table>
       )}
+      <div className="mt-6 border-t pt-4">
+          <button
+            className="bg-blue-600 text-white px-20 py-2 rounded hover:bg-green-700">
+            กงป.เพิ่มงานเองแบบไม่มีรายละเอียด
+          </button>       
+      </div>
     </div>
   );
 };
