@@ -49,7 +49,7 @@ export default function SimpleProjectForm() {
           </select>
         </div>
 
-        {/* ✅ เฉพาะเมื่อ user เลือก 'งาน' => แสดง dropdown ประเภทของงาน */}
+        {/* งาน */}
         {projectType === "งาน" && (
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -67,6 +67,24 @@ export default function SimpleProjectForm() {
             </select>
           </div>
         )}
+          {/* ปปงบ */}
+          {/* {projectType === "เปลี่ยนแปลงงบประมาณ" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              ประเภทของงาน
+            </label>
+            <select className="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+              <option value="">-- เลือกประเภทของงาน --</option>
+              <option value="หมวดสิ่งก่อสร้าง">หมวดสิ่งก่อสร้าง</option>
+              <option value="หมวดเครื่องจักรอุปกรณ์">หมวดเครื่องจักรอุปกรณ์</option>
+              <option value="หมวดเครื่องใช้สำนักงานและเครื่องมือเครื่องใช้ขนาดเล็ก">
+                หมวดเครื่องใช้สำนักงานและเครื่องมือเครื่องใช้ขนาดเล็ก
+              </option>
+              <option value="หมวดวิจัยและพัฒนา">หมวดวิจัยและพัฒนา</option>
+              <option value="หมวดลงทุนอื่นๆ">หมวดลงทุนอื่นๆ</option>
+            </select>
+          </div>
+        )} */}
 
         {/* วันที่เริ่มต้น / วันที่สิ้นสุด */}
         <div className="flex gap-4">

@@ -40,7 +40,7 @@ const CreateSubprojectPage = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">สร้างงานย่อยภายใต้โครงการ</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">งาน/แผนงาน/โครงการ ABC</h1>
 
       <table className="w-full border border-collapse text-sm">
         <thead className="bg-gray-200">
@@ -57,10 +57,16 @@ const CreateSubprojectPage = () => {
               <td className="border px-4 py-2 text-right">{sp.totalBudget.toLocaleString()}</td>
               <td className="border px-4 py-2 text-center space-x-2">
                 <Link
-                  to={`/editproject/P001/numeric/${sp.id}`}
+                  to={`/editproject/P001/basic/${sp.id}`}
                   className="text-blue-600 hover:underline"
                 >
-                  แก้ไข
+                  แก้ไขข้อมูลทั่วไป
+                </Link>
+                <Link
+                  to={`/editproject/P001/numeric/${sp.id}`}
+                  className="text-green-600 hover:underline"
+                >
+                  แก้ไขตัวเลข
                 </Link>
                 <button
                   className="text-red-600 hover:underline"
@@ -101,7 +107,15 @@ const CreateSubprojectPage = () => {
           >
             ➕ เพิ่ม
           </button>
-        </div>
+        </div>        
+      </div>
+      <div className="mt-6 border-t pt-4">
+          <button
+            className="bg-blue-600 text-white px-20 py-2 rounded hover:bg-green-700"
+            onClick={handleAdd}
+          >
+            จัดทำรายงานความเสี่ยง
+          </button>       
       </div>
     </div>
   );

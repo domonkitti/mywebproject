@@ -122,12 +122,12 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                 </li>
                 <li>
                   <a
-                    href="/Settings"
+                    href="/changed"
                     className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/Settings" ? "text-blue-600 bg-gray-200" : "text-black"
+                      location.pathname === "/changed" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
-                    ⚙️ <span className="ml-3">Settings</span>
+                    📜 <span className="ml-3">เปลี่ยนแปลงงบ</span>
                   </a>
                 </li>
               </ul>

@@ -6,6 +6,7 @@ import Form006 from "../../components/EditForm/006";
 import Form005_2 from "../../components/EditForm/005-2";
 import Form005_3 from "../../components/EditForm/005-3";
 import Form005_4 from "../../components/EditForm/005-4";
+import Form010_3 from "../../components/EditForm/010-3";
 
 export default function TabFormNum() {
   const [activeTab, setActiveTab] = useState("004-4");
@@ -24,6 +25,7 @@ export default function TabFormNum() {
       ],
      },
     { name: "006", component: <Form006 />},
+    { name: "010-3", component: <Form010_3 />},
   ];
 
   const currentTab = tabs.find((t) => t.name === activeTab);

@@ -18,8 +18,8 @@ function RoutesConfig() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/editproject/:projectId" element={<SelectDataType />} />
-      <Route path="/editproject/:projectId/basic" element={<TabFormBasic />} />
+      <Route path="/editproject/:projectId" element={<CreateSubprojectPage />} />
+      <Route path="/editproject/:projectId/basic/:subproject" element={<TabFormBasic />} />
       <Route path="/editproject/:projectId/numeric/:subproject" element={<TabFormNum />} />
       <Route path="/AllRequest" element={<ClassPage />} />
       <Route path="/allprojects" element={<ProjectPage />} />
@@ -29,7 +29,6 @@ function RoutesConfig() {
       <Route path="/editreport/:projectId" element={<EditableTable />} />
       <Route path="/newproject" element={<NewProject />} />
       <Route path="/ConfirmApprove/:projectId" element={<ConfirmApprove />} />
-      <Route path="/editproject/:projectId/numeric" element={<CreateSubprojectPage />} />
     </Routes>
   )
 }
