@@ -54,6 +54,9 @@ const ReviewingProjectPage = () => {
                   className="bg-red-200 p-2 rounded-full text-red-600 hover:bg-red-300 ml-2">
                   ❌ Reject
                 </Link>
+                <button className="bg-green-200 ml-2 px-2 py-2 rounded hover:bg-green-300 rounded-full">
+                      ดูรายละเอียด
+                </button>
               </td>
             </tr>
           ))}

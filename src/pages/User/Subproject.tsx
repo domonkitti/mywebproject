@@ -11,6 +11,7 @@ const CreateSubprojectPage = () => {
   const [subProjects, setSubProjects] = useState<SubProject[]>([
     { id: 1, name: "งานย่อย A-1", totalBudget: 150000 },
     { id: 2, name: "งานย่อย A-2", totalBudget: 120000 },
+    { id: 2, name: "สำรองราคา(สูงสุด 3%)", totalBudget: 120000 },
   ]);
 
   const [newName, setNewName] = useState("");
