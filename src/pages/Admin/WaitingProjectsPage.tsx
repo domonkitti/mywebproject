@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Table } from "flowbite-react";
-import { getReviewedProjects } from "../../apis/ProjectApi";
+import { getReviewedProjects } from "../../apis/UserProjectApi";
 import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
 import dayjs from "dayjs";
 import { HiEye } from "react-icons/hi";

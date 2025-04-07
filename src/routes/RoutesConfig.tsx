@@ -10,15 +10,16 @@ import SelectDataType from '../pages/User/SelectDataType.tsx'
 import TabFormBasic from '../pages/User/EditProjectsBasic.tsx'
 import TabFormNum from '../pages/User/EditProjectsNum.tsx'
 import ConfirmApprove from '../pages/Admin/ConfirmApprove.tsx'
-import CreateSubprojectPage from '../pages/User/Subproject.tsx'
+import CreateSubprojectPage from '../components/EditForm/Subproject.tsx'
 import EditableTable from '../pages/Report/Editreport.tsx'
 import AllreportsPage from '../pages/Report/ShowreportPage.tsx'
+import SubprojectPage from '../pages/User/SubprojectPage.tsx'
 
 function RoutesConfig() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/editproject/:projectId" element={<CreateSubprojectPage />} />
+      <Route path="/editproject/:projectId" element={<SubprojectPage />} />
       <Route path="/editproject/:projectId/basic/:subproject" element={<TabFormBasic />} />
       <Route path="/editproject/:projectId/numeric/:subproject" element={<TabFormNum />} />
       <Route path="/AllRequest" element={<ClassPage />} />

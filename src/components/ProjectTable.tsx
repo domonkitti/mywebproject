@@ -1,10 +1,19 @@
-import { ProjectForFrontEnd } from "../interfaces/MainInterface";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 
 interface ProjectTableProps {
-  projects: ProjectForFrontEnd[];
+  projects: {
+    project_id: number;
+    project_name: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    type: string;
+    subtype: string;
+    owner: string;
+    budget: number;
+  }[];
 }
 
 const formatDate = (date: Date | string) => {
@@ -28,19 +37,19 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
         </thead>
         <tbody>
           {projects.map((project) => (
-            <tr key={project.projectId} className="hover:bg-gray-50">
-              <td className="text-left border border-gray-400 px-4 py-2">{project.projectName}</td>
-              <td className="text-left border border-gray-400 px-4 py-2">{project.departmentName}</td>
-              <td className="text-center border border-gray-400 px-4 py-2">{formatDate(project.startDate)}</td>
-              <td className="text-center border border-gray-400 px-4 py-2">{formatDate(project.endDate)}</td>
+            <tr key={project.project_id} className="hover:bg-gray-50">
+              <td className="text-left border border-gray-400 px-4 py-2">{project.project_name}</td>
+              <td className="text-left border border-gray-400 px-4 py-2">{project.owner}</td>
+              <td className="text-center border border-gray-400 px-4 py-2">{formatDate(project.start_date)}</td>
+              <td className="text-center border border-gray-400 px-4 py-2">{formatDate(project.end_date)}</td>
               <td className="text-center border border-gray-400 px-4 py-2">
-                {(project.budgetTotal ?? 0).toLocaleString()} บาท
+                {(project.budget ?? 0).toLocaleString()} บาท
               </td>
               <td className="text-center border border-gray-400 px-4 py-2 font-bold">{project.status}</td>
               <td className="text-right border border-gray-400 px-4 py-2">
                 <div className="flex flex-row justify-center space-x-3">
                   <Link
-                    to={`/editproject/${project.projectId}`}
+                    to={`/editproject/${project.project_id}`}
                     className="bg-green-200 p-2 rounded-full text-green-600 hover:bg-green-300"
                   >
                     <IoPencil className="h-5 w-5" />

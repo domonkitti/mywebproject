@@ -1,6 +1,6 @@
 import { Table } from "flowbite-react";
 import { useEffect, useState } from "react";
-import { getReviewedProjects } from "../../apis/ProjectApi";
+import { getReviewedProjects } from "../../apis/UserProjectApi";
 import { ProjectTable } from "../../interfaces/MainInterface";
 import { IoPencil } from "react-icons/io5";
 import React from "react";

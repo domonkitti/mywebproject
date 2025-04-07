@@ -1,184 +1,435 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { IoPencil } from "react-icons/io5";
 
-// 🔧 สมมุติว่าเราจะใช้ API จริงทีหลัง เช่น getProjectById(projectId)
-// const getProjectById = async (id: string) => { ... }
+// --- Data Interfaces ---
+interface BudgetData {
+  requestDraftId: number;
+  draftSubtaskId: number;
+  list: string;
+  year: number;
+  requestPay: string;
+  value: number;
+  commitInvest: string;
+  subtaskName: string;
+}
 
-const getMockProjectById = async (id: string) => {
-  return {
-    projectId: id,
-    projectName: "โครงการ A",
-    departmentName: "ฝ่าย A",
-    subProjects: [
-      {
-        subProjectId: 11,
-        subProjectName: "งานย่อย A-1",
-        budgetPlan: [
-          {
-            year: 2024,
-            budgetAllocated: {
-              ผูกพัน: { เงินกู้: 100000, เงินรายได้: 50000 },
-              ลงทุน: { เงินกู้: 200000, เงินรายได้: 100000 },
-            },
-            budgetUsage: {
-              ผูกพัน: { เงินกู้: 50000, เงินรายได้: 25000 },
-              ลงทุน: { เงินกู้: 150000, เงินรายได้: 75000 },
-            },
-          },
-        ],
-      },
-      {
-        subProjectId: 12,
-        subProjectName: "งานย่อย A-2",
-        budgetPlan: [
-          {
-            year: 2024,
-            budgetAllocated: {
-              ผูกพัน: { เงินกู้: 60000, เงินรายได้: 30000 },
-              ลงทุน: { เงินกู้: 100000, เงินรายได้: 50000 },
-            },
-            budgetUsage: {
-              ผูกพัน: { เงินกู้: 30000, เงินรายได้: 15000 },
-              ลงทุน: { เงินกู้: 80000, เงินรายได้: 30000 },
-            },
-          },
-        ],
-      },
-    ],
+interface YearData {
+  operationCommit: number; // (ผูกพัน ของวงเงินดำเนินการ)
+  operationInvest: number; // (ลงทุน ของวงเงินดำเนินการ)
+  operationTotal: number;  // (รวม ของวงเงินดำเนินการ)
+  targetCommit: number;    // (ผูกพัน ของเป้าหมายเบิกจ่าย)
+  targetInvest: number;    // (ลงทุน ของเป้าหมายเบิกจ่าย)
+  targetTotal: number;     // (รวม ของเป้าหมายเบิกจ่าย)
+  cut: number;             // ตัดทิ้ง
+}
+
+interface TableData {
+  [year: number]: YearData;
+}
+
+interface SubtaskSummary {
+  draftSubtaskId: number;
+  subtaskName: string;
+  years: number[];
+  tableData: TableData;
+}
+
+// --- Admin Input Interfaces ---
+interface FundInput {
+  requestInvest: number;
+  payCommit: number;
+  payInvest: number;
+  cut: number;
+}
+
+interface AdminInputs {
+  [year: number]: {
+    loan?: FundInput;
+    revenue?: FundInput;
   };
-};
+}
 
-const formatNumber = (num: number) =>
-  isNaN(num) ? "-" : num.toLocaleString("th-TH", { minimumFractionDigits: 0 });
+// --- Utility Function ---
+const formatNumber = (num: number) => (num > 0 ? num.toLocaleString("th-TH") : "-");
 
-const ConfirmApprovePage = () => {
-  const { projectId } = useParams();
-  const [project, setProject] = useState<any>(null);
-  const [uniqueYears, setUniqueYears] = useState<number[]>([]);
+// --- ConfirmApprovePage Component ---
+const ConfirmApprovePage: React.FC = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const [loading, setLoading] = useState(true);
+  const [subtaskSummaries, setSubtaskSummaries] = useState<SubtaskSummary[]>([]);
+  const [unionYears, setUnionYears] = useState<number[]>([]);
+  const [adminInputs, setAdminInputs] = useState<AdminInputs>({});
 
-  // We'll track user’s input for เงินกู้ + เงินรายได้ in state,
-  // so that we can do the “vertical sum” row under those two rows.
-  const [moneyInputs, setMoneyInputs] = useState<{
-    [year: number]: [number[], number[]]; // 2 rows (เงินกู้, เงินรายได้), each with 6 columns
-  }>({});
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`http://localhost:2024/projects/getbudgetrequestsbyproject/${projectId}`);
+        const result: BudgetData[] = await res.json();
 
-  // This helper updates a single cell in moneyInputs
-  const handleInputChange = (
-    year: number,
-    rowIndex: number, // 0 => เงินกู้, 1 => เงินรายได้
-    colIndex: number, // 0..5 for the 6 columns
-    value: number
-  ) => {
-    setMoneyInputs((prev) => {
-      // if we never stored anything for this year, create a default structure
-      if (!prev[year]) {
-        prev[year] = [
-          [0, 0, 0, 0, 0, 0], // row 0 => เงินกู้
-          [0, 0, 0, 0, 0, 0], // row 1 => เงินรายได้
-        ];
+        // --- Group data by draftSubtaskId ---
+        const subtaskMap: Record<number, BudgetData[]> = {};
+        result.forEach((item) => {
+          if (!subtaskMap[item.draftSubtaskId]) {
+            subtaskMap[item.draftSubtaskId] = [];
+          }
+          subtaskMap[item.draftSubtaskId].push(item);
+        });
+
+        const summaries: SubtaskSummary[] = [];
+        Object.keys(subtaskMap).forEach((key) => {
+          const group = subtaskMap[Number(key)];
+          // Get the set of years for this subtask
+          const yearSet = new Set<number>();
+          group.forEach((item) => yearSet.add(item.year));
+          const sortedYears = Array.from(yearSet).sort((a, b) => a - b);
+
+          // Initialize table data for each year in this subtask
+          const initialTableData: TableData = {};
+          sortedYears.forEach((year) => {
+            initialTableData[year] = {
+              operationCommit: 0,
+              operationInvest: 0,
+              operationTotal: 0,
+              targetCommit: 0,
+              targetInvest: 0,
+              targetTotal: 0,
+              cut: 0,
+            };
+          });
+
+          // Sum data for each item in the subtask
+          group.forEach((item) => {
+            const year = item.year;
+            const isInvest = item.commitInvest.trim() === "invest";
+            const isRequest = item.requestPay === "request";
+            const isPay = item.requestPay === "pay";
+
+            if (isInvest && isRequest) initialTableData[year].operationInvest += item.value;
+            if (!isInvest && isRequest) initialTableData[year].operationCommit += item.value;
+
+            if (isInvest && isPay) initialTableData[year].targetInvest += item.value;
+            if (!isInvest && isPay) initialTableData[year].targetCommit += item.value;
+          });
+
+          // Compute totals for each year (for years that have data)
+          sortedYears.forEach((year) => {
+            const data = initialTableData[year];
+            data.operationTotal = data.operationCommit + data.operationInvest;
+            data.targetTotal = data.targetCommit + data.targetInvest;
+          });
+
+          // Cross-year calculation within the subtask group
+          sortedYears.forEach((year, index) => {
+            if (index === 0) return;
+            const prevYear = sortedYears[index - 1];
+            const prevData = initialTableData[prevYear];
+            initialTableData[year].operationCommit = prevData.operationTotal - prevData.targetTotal;
+            initialTableData[year].operationTotal = initialTableData[year].operationCommit + initialTableData[year].operationInvest;
+          });
+
+          summaries.push({
+            draftSubtaskId: group[0].draftSubtaskId,
+            subtaskName: group[0].subtaskName,
+            years: sortedYears,
+            tableData: initialTableData,
+          });
+        });
+
+        // --- Create a union of years from all subtask summaries ---
+        const unionYearSet = new Set<number>();
+        summaries.forEach((summary) => {
+          summary.years.forEach((year) => unionYearSet.add(year));
+        });
+        const unionYearsArr = Array.from(unionYearSet).sort((a, b) => a - b);
+
+        // --- For each subtask, ensure tableData covers all unionYears and recalc cross-year ---
+        summaries.forEach((summary) => {
+          const newTableData: TableData = {};
+          unionYearsArr.forEach((year) => {
+            if (summary.tableData[year]) {
+              newTableData[year] = { ...summary.tableData[year] };
+            } else {
+              newTableData[year] = {
+                operationCommit: 0,
+                operationInvest: 0,
+                operationTotal: 0,
+                targetCommit: 0,
+                targetInvest: 0,
+                targetTotal: 0,
+                cut: 0,
+              };
+            }
+          });
+          unionYearsArr.forEach((year, index) => {
+            if (index === 0) {
+              const data = newTableData[year];
+              data.operationTotal = data.operationCommit + data.operationInvest;
+              data.targetTotal = data.targetCommit + data.targetInvest;
+              return;
+            }
+            const prevYear = unionYearsArr[index - 1];
+            const prevData = newTableData[prevYear];
+            newTableData[year].operationCommit = prevData.operationTotal - prevData.targetTotal;
+            newTableData[year].operationTotal = newTableData[year].operationCommit + newTableData[year].operationInvest;
+            newTableData[year].targetTotal = newTableData[year].targetCommit + newTableData[year].targetInvest;
+          });
+          summary.tableData = newTableData;
+          summary.years = unionYearsArr;
+        });
+
+        setSubtaskSummaries(summaries);
+        setUnionYears(unionYearsArr);
+      } catch (error) {
+        console.error("Error fetching budget summary:", error);
+      } finally {
+        setLoading(false);
       }
-      const newYearData = [...prev[year].map((arr) => [...arr])]; // clone
-      newYearData[rowIndex][colIndex] = value;
+    };
+
+    fetchData();
+  }, [projectId]);
+
+  // --- Calculate totals for a subtask across all years ---
+  const calcTotals = (tableData: TableData, years: number[]) => {
+    const totals: YearData = {
+      operationCommit: 0,
+      operationInvest: 0,
+      operationTotal: 0,
+      targetCommit: 0,
+      targetInvest: 0,
+      targetTotal: 0,
+      cut: 0,
+    };
+    years.forEach((year) => {
+      const data = tableData[year];
+      totals.operationCommit += data.operationCommit;
+      totals.operationInvest += data.operationInvest;
+      totals.operationTotal += data.operationTotal;
+      totals.targetCommit += data.targetCommit;
+      totals.targetInvest += data.targetInvest;
+      totals.targetTotal += data.targetTotal;
+      totals.cut += data.cut;
+    });
+    return totals;
+  };
+
+  // --- Compute overall union totals (per year) across all subtasks ---
+  const overallUnionTotals = unionYears.reduce((acc, year) => {
+    acc[year] = {
+      operationCommit: 0,
+      operationInvest: 0,
+      operationTotal: 0,
+      targetCommit: 0,
+      targetInvest: 0,
+      targetTotal: 0,
+      cut: 0,
+    };
+    subtaskSummaries.forEach((summary) => {
+      const data = summary.tableData[year];
+      acc[year].operationCommit += data.operationCommit;
+      acc[year].operationInvest += data.operationInvest;
+      acc[year].operationTotal += data.operationTotal;
+      acc[year].targetCommit += data.targetCommit;
+      acc[year].targetInvest += data.targetInvest;
+      acc[year].targetTotal += data.targetTotal;
+      acc[year].cut += data.cut;
+    });
+    return acc;
+  }, {} as TableData);
+
+  // --- Compute overall grand totals across all subtasks and years ---
+  const overallGrandTotals = subtaskSummaries.reduce(
+    (totals, summary) => {
+      const t = calcTotals(summary.tableData, unionYears);
+      totals.operationCommit += t.operationCommit;
+      totals.operationInvest += t.operationInvest;
+      totals.operationTotal += t.operationTotal;
+      totals.targetCommit += t.targetCommit;
+      totals.targetInvest += t.targetInvest;
+      totals.targetTotal += t.targetTotal;
+      totals.cut += t.cut;
+      return totals;
+    },
+    { operationCommit: 0, operationInvest: 0, operationTotal: 0, targetCommit: 0, targetInvest: 0, targetTotal: 0, cut: 0 }
+  );
+
+  // --- Admin Inputs Logic (same as before) ---
+  const handleFundInputChange = (
+    year: number,
+    fundType: "loan" | "revenue",
+    field: keyof FundInput,
+    value: string
+  ) => {
+    const numVal = parseFloat(value) || 0;
+    setAdminInputs((prev) => {
+      const newData = { ...(prev[year]?.[fundType] || {}) } as FundInput;
+      newData[field] = numVal;
       return {
         ...prev,
-        [year]: newYearData,
+        [year]: {
+          ...prev[year],
+          [fundType]: newData,
+        },
       };
     });
   };
 
-  useEffect(() => {
-    if (!projectId) return;
-    getMockProjectById(projectId).then((data) => {
-      setProject(data);
-      const years = data.subProjects.flatMap((sp: any) =>
-        sp.budgetPlan.map((bp: any) => bp.year)
-      );
-      setUniqueYears(Array.from(new Set(years)).sort((a, b) => a - b));
-    });
-  }, [projectId]);
-
-  if (!project) return <p className="text-center">กำลังโหลด...</p>;
-
-  // A helper to sum data from each subProject for a given year & column type
-  const sumSubProjects = (
-    subProjects: any[],
-    year: number,
-    section: "budgetAllocated" | "budgetUsage",
-    group: "ผูกพัน" | "ลงทุน"
-  ) => {
-    return subProjects.reduce((total, sp) => {
-      const plan = sp.budgetPlan.find((bp: any) => bp.year === year);
-      if (!plan) return total;
-      const val = plan[section]?.[group].เงินกู้ + plan[section]?.[group].เงินรายได้;
-      return total + (val || 0);
-    }, 0);
+  const calcRequestCommit = (i: number, previousBalances: number[]): number => {
+    if (i === 0) return 0;
+    return previousBalances[i - 1] || 0;
   };
 
-  // Sums budgetAllocated or budgetUsage (both ผูกพัน + ลงทุน)
-  const sumAllTypes = (
-    subProjects: any[],
-    year: number,
-    section: "budgetAllocated" | "budgetUsage"
-  ) => {
-    const totalผูกพัน = sumSubProjects(subProjects, year, section, "ผูกพัน");
-    const totalลงทุน = sumSubProjects(subProjects, year, section, "ลงทุน");
-    return totalผูกพัน + totalลงทุน;
+  const getFundData = (year: number, fundType: "loan" | "revenue"): FundInput => {
+    return (
+      adminInputs[year]?.[fundType] || {
+        requestInvest: 0,
+        payCommit: 0,
+        payInvest: 0,
+        cut: 0,
+      }
+    );
   };
 
-  // Sums “remaining” across subprojects: (allocated total - usage total).
-  const sumRemaining = (subProjects: any[], year: number) => {
-    const alloc = sumAllTypes(subProjects, year, "budgetAllocated");
-    const usage = sumAllTypes(subProjects, year, "budgetUsage");
-    return alloc - usage;
+  const renderFundRow = (label: string, fundType: "loan" | "revenue") => {
+    const previousBalances: number[] = [];
+    return (
+      <tr>
+        <td className="border p-2 text-center font-bold">{label}</td>
+        {unionYears.map((year, i) => {
+          const fundData = getFundData(year, fundType);
+          const requestCommit = calcRequestCommit(i, previousBalances);
+          const sumReq = requestCommit + fundData.requestInvest;
+          const sumPay = fundData.payCommit + fundData.payInvest;
+          const balance = sumReq - sumPay - fundData.cut;
+          previousBalances.push(balance);
+          return (
+            <React.Fragment key={year}>
+              <td className="border p-2 text-right">{formatNumber(requestCommit)}</td>
+              <td className="border p-2 text-center">
+                <input
+                  type="number"
+                  className="border p-1 w-full text-right"
+                  value={fundData.requestInvest || ""}
+                  onChange={(e) => handleFundInputChange(year, fundType, "requestInvest", e.target.value)}
+                />
+              </td>
+              <td className="border p-2 text-right font-bold">{formatNumber(sumReq)}</td>
+              <td className="border p-2 text-center">
+                <input
+                  type="number"
+                  className="border p-1 w-full text-right"
+                  value={fundData.payCommit || ""}
+                  onChange={(e) => handleFundInputChange(year, fundType, "payCommit", e.target.value)}
+                />
+              </td>
+              <td className="border p-2 text-center">
+                <input
+                  type="number"
+                  className="border p-1 w-full text-right"
+                  value={fundData.payInvest || ""}
+                  onChange={(e) => handleFundInputChange(year, fundType, "payInvest", e.target.value)}
+                />
+              </td>
+              <td className="border p-2 text-right font-bold">{formatNumber(sumPay)}</td>
+              <td className="border p-2 text-center">
+                <input
+                  type="number"
+                  className="border p-1 w-full text-right"
+                  value={fundData.cut || ""}
+                  onChange={(e) => handleFundInputChange(year, fundType, "cut", e.target.value)}
+                />
+              </td>
+            </React.Fragment>
+          );
+        })}
+        <td className="border p-2 text-right"></td>
+        <td className="border p-2 text-right"></td>
+      </tr>
+    );
   };
 
-  // Handlers for the three buttons
-  const handleApprove = () => {
-    // TODO: Implement your "Approve" logic here
-    alert("Approved!");
+  const renderSumFundRow = () => {
+    return (
+      <tr className="bg-gray-50 font-semibold">
+        <td className="border p-2 text-center">รวมเงิน</td>
+        {unionYears.map((year, i) => {
+          const loanData = getFundData(year, "loan");
+          const revenueData = getFundData(year, "revenue");
+          const reqCommit = calcRequestCommit(i, []) + 0; // For simplicity, admin rows do not chain across fund types here.
+          const reqInvest = loanData.requestInvest + revenueData.requestInvest;
+          const sumReq = reqCommit + reqInvest;
+          const payCommit = loanData.payCommit + revenueData.payCommit;
+          const payInvest = loanData.payInvest + revenueData.payInvest;
+          const sumPay = payCommit + payInvest;
+          const cut = loanData.cut + revenueData.cut;
+          return (
+            <React.Fragment key={year}>
+              <td className="border p-2 text-right">{formatNumber(reqCommit)}</td>
+              <td className="border p-2 text-right">{formatNumber(reqInvest)}</td>
+              <td className="border p-2 text-right font-bold">{formatNumber(sumReq)}</td>
+              <td className="border p-2 text-right">{formatNumber(payCommit)}</td>
+              <td className="border p-2 text-right">{formatNumber(payInvest)}</td>
+              <td className="border p-2 text-right font-bold">{formatNumber(sumPay)}</td>
+              <td className="border p-2 text-right">{formatNumber(cut)}</td>
+            </React.Fragment>
+          );
+        })}
+        <td className="border p-2 text-right"></td>
+        <td className="border p-2 text-right"></td>
+      </tr>
+    );
   };
 
-  const handleApproveAndCopy = () => {
-    // TODO: Implement your "Approve and Copy" logic here
-    alert("Approved and Copied!");
-  };
+  if (loading) return <p className="text-center">กำลังโหลดข้อมูล...</p>;
+  if (subtaskSummaries.length === 0)
+    return <p className="text-center text-gray-500">ไม่มีข้อมูล</p>;
 
-  const handleReject = () => {
-    // TODO: Implement your "Reject" logic here
-    alert("Rejected!");
-  };
+  // Total number of columns:
+  // First column for subtask name + (7 columns for each year) + 2 extra overall columns
+  const totalCols = 1 + unionYears.length * 7 + 2;
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold text-center mb-6">
-        รายละเอียดโครงการ: {project.projectName}
-      </h2>
+      <h2 className="text-2xl font-bold text-center mb-6">รายละเอียดโครงการ</h2>
       <div className="overflow-auto">
-        <table className="w-full text-sm border border-collapse">
+        <table className="w-full text-sm border border-collapse min-w-max">
           <thead className="bg-gray-100 text-gray-700 text-center">
+            {/* Header Row 1 */}
             <tr>
-              <th className="border p-2" rowSpan={2}>
-                ชื่อโครงการ
-              </th>
-              <th className="border p-2" rowSpan={2}>
+              <th className="border p-2" rowSpan={3}>
                 งานย่อย
               </th>
-              {uniqueYears.map((year) => (
+              {unionYears.map((year) => (
+                <th key={year} className="border p-2" colSpan={7}>
+                  ปี {year}
+                </th>
+              ))}
+              <th className="border p-2" rowSpan={3}>
+                รวมดำเนินการทุกปี
+              </th>
+              <th className="border p-2" rowSpan={3}>
+                รวมเป้าหมายเบิกจ่ายทุกปี
+              </th>
+            </tr>
+            {/* Header Row 2 */}
+            <tr>
+              {unionYears.map((year) => (
                 <React.Fragment key={`year-${year}`}>
                   <th className="border p-2" colSpan={3}>
-                    งบประมาณปี {year}
+                    วงเงินดำเนินการ
                   </th>
                   <th className="border p-2" colSpan={3}>
-                    เบิกจ่ายปี {year}
+                    เป้าหมายเบิกจ่าย
                   </th>
-                  <th className="border p-2">คงเหลือ</th>
-                  <th className="border p-2">ตัดทิ้ง</th>
+                  <th className="border p-2" rowSpan={2}>
+                    ตัดทิ้ง
+                  </th>
                 </React.Fragment>
               ))}
             </tr>
+            {/* Header Row 3 */}
             <tr>
-              {uniqueYears.map((year) => (
+              {unionYears.map((year) => (
                 <React.Fragment key={`subhead-${year}`}>
                   <th className="border p-2">ผูกพัน</th>
                   <th className="border p-2">ลงทุน</th>
@@ -186,285 +437,80 @@ const ConfirmApprovePage = () => {
                   <th className="border p-2">ผูกพัน</th>
                   <th className="border p-2">ลงทุน</th>
                   <th className="border p-2">รวม</th>
-                  <th className="border p-2"></th>
-                  <th className="border p-2"></th>
                 </React.Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
-            {project.subProjects.map((sp: any, spIndex: number) => (
-              <tr key={sp.subProjectId}>
-                {spIndex === 0 && (
-                  <td
-                    className="border p-2 font-bold text-left"
-                    rowSpan={project.subProjects.length + 4}
-                  >
-                    <button
-                      onClick={() => console.log("Edit", project)}
-                      className="mr-2 text-blue-600 hover:text-blue-800"
-                    >
-                      <IoPencil size={18} />
-                    </button>
-                    {project.projectName}
+            {/* --- Rows for each subtask --- */}
+            {subtaskSummaries.map((summary) => {
+              const totals = calcTotals(summary.tableData, unionYears);
+              // Compute overall sums for this subtask:
+              const overallOperation = unionYears.reduce(
+                (acc, year) => acc + summary.tableData[year].operationTotal,
+                0
+              );
+              const overallTarget = unionYears.reduce(
+                (acc, year) => acc + summary.tableData[year].targetTotal,
+                0
+              );
+              return (
+                <tr key={summary.draftSubtaskId}>
+                  <td className="border p-2 text-left">{summary.subtaskName}</td>
+                  {unionYears.map((year) => {
+                    const data = summary.tableData[year];
+                    return (
+                      <React.Fragment key={`data-${year}`}>
+                        <td className="border p-2 text-right">{formatNumber(data.operationCommit)}</td>
+                        <td className="border p-2 text-right">{formatNumber(data.operationInvest)}</td>
+                        <td className="border p-2 text-right font-bold">{formatNumber(data.operationTotal)}</td>
+                        <td className="border p-2 text-right">{formatNumber(data.targetCommit)}</td>
+                        <td className="border p-2 text-right">{formatNumber(data.targetInvest)}</td>
+                        <td className="border p-2 text-right font-bold">{formatNumber(data.targetTotal)}</td>
+                        <td className="border p-2 text-right">{formatNumber(data.cut)}</td>
+                      </React.Fragment>
+                    );
+                  })}
+                  <td className="border p-2 text-right font-bold">
+                    {formatNumber(overallOperation)}
                   </td>
-                )}
-                <td className="border p-2 text-left">{sp.subProjectName}</td>
-                {uniqueYears.map((year) => {
-                  const bp = sp.budgetPlan.find((bp: any) => bp.year === year);
-                  if (!bp) {
-                    return Array(8)
-                      .fill(null)
-                      .map((_, i) => (
-                        <td key={`empty-${year}-${i}`} className="border p-2"></td>
-                      ));
-                  }
-
-                  const b = bp.budgetAllocated;
-                  const u = bp.budgetUsage;
-                  const sumSection = (obj: any) =>
-                    obj.ผูกพัน.เงินกู้ +
-                    obj.ผูกพัน.เงินรายได้ +
-                    obj.ลงทุน.เงินกู้ +
-                    obj.ลงทุน.เงินรายได้;
-                  const allocatedSum = sumSection(b);
-                  const usageSum = sumSection(u);
-                  const remaining = allocatedSum - usageSum;
-
-                  return (
-                    <React.Fragment key={`data-${year}`}>
-                      {/* Allocated: ผูกพัน */}
-                      <td className="border p-2 text-right">
-                        {formatNumber(b.ผูกพัน.เงินกู้ + b.ผูกพัน.เงินรายได้)}
-                      </td>
-                      {/* Allocated: ลงทุน */}
-                      <td className="border p-2 text-right">
-                        {formatNumber(b.ลงทุน.เงินกู้ + b.ลงทุน.เงินรายได้)}
-                      </td>
-                      {/* Allocated: รวม */}
-                      <td className="border p-2 text-right font-bold">
-                        {formatNumber(allocatedSum)}
-                      </td>
-
-                      {/* Usage: ผูกพัน */}
-                      <td className="border p-2 text-right">
-                        {formatNumber(u.ผูกพัน.เงินกู้ + u.ผูกพัน.เงินรายได้)}
-                      </td>
-                      {/* Usage: ลงทุน */}
-                      <td className="border p-2 text-right">
-                        {formatNumber(u.ลงทุน.เงินกู้ + u.ลงทุน.เงินรายได้)}
-                      </td>
-                      {/* Usage: รวม */}
-                      <td className="border p-2 text-right font-bold">
-                        {formatNumber(usageSum)}
-                      </td>
-
-                      {/* Remaining */}
-                      <td className="border p-2 text-right">
-                        {formatNumber(remaining)}
-                      </td>
-                      {/* ตัดทิ้ง */}
-                      <td className="border p-2"></td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
-            ))}
-
-            {/* รวมงานย่อย (sum of all subProjects) */}
-            <tr>
-              <td className="border p-2 text-right font-bold" colSpan={1}>
-                รวมงานย่อย
-              </td>
-              {uniqueYears.map((year) => {
-                const totalผูกพันAllocated = sumSubProjects(
-                  project.subProjects,
-                  year,
-                  "budgetAllocated",
-                  "ผูกพัน"
-                );
-                const totalลงทุนAllocated = sumSubProjects(
-                  project.subProjects,
-                  year,
-                  "budgetAllocated",
-                  "ลงทุน"
-                );
-                const totalAllocated = totalผูกพันAllocated + totalลงทุนAllocated;
-
-                const totalผูกพันUsage = sumSubProjects(
-                  project.subProjects,
-                  year,
-                  "budgetUsage",
-                  "ผูกพัน"
-                );
-                const totalลงทุนUsage = sumSubProjects(
-                  project.subProjects,
-                  year,
-                  "budgetUsage",
-                  "ลงทุน"
-                );
-                const totalUsage = totalผูกพันUsage + totalลงทุนUsage;
-
-                const totalRemain = sumRemaining(project.subProjects, year);
-
+                  <td className="border p-2 text-right font-bold">
+                    {formatNumber(overallTarget)}
+                  </td>
+                </tr>
+              );
+            })}
+            {/* --- Overall Summary Row for all subtasks --- */}
+            <tr className="bg-gray-100 font-semibold">
+              <td className="border p-2 text-center">รวมทุกงานย่อย</td>
+              {unionYears.map((year) => {
+                const data = overallUnionTotals[year];
                 return (
-                  <React.Fragment key={`sub-sum-${year}`}>
-                    <td className="border p-2 text-right">
-                      {formatNumber(totalผูกพันAllocated)}
-                    </td>
-                    <td className="border p-2 text-right">
-                      {formatNumber(totalลงทุนAllocated)}
-                    </td>
-                    <td className="border p-2 text-right font-bold">
-                      {formatNumber(totalAllocated)}
-                    </td>
-                    <td className="border p-2 text-right">
-                      {formatNumber(totalผูกพันUsage)}
-                    </td>
-                    <td className="border p-2 text-right">
-                      {formatNumber(totalลงทุนUsage)}
-                    </td>
-                    <td className="border p-2 text-right font-bold">
-                      {formatNumber(totalUsage)}
-                    </td>
-                    <td className="border p-2 text-right">
-                      {formatNumber(totalRemain)}
-                    </td>
-                    <td className="border p-2"></td>
+                  <React.Fragment key={`overall-${year}`}>
+                    <td className="border p-2 text-right">{formatNumber(data.operationCommit)}</td>
+                    <td className="border p-2 text-right">{formatNumber(data.operationInvest)}</td>
+                    <td className="border p-2 text-right font-bold">{formatNumber(data.operationTotal)}</td>
+                    <td className="border p-2 text-right">{formatNumber(data.targetCommit)}</td>
+                    <td className="border p-2 text-right">{formatNumber(data.targetInvest)}</td>
+                    <td className="border p-2 text-right font-bold">{formatNumber(data.targetTotal)}</td>
+                    <td className="border p-2 text-right">{formatNumber(data.cut)}</td>
                   </React.Fragment>
                 );
               })}
+              <td className="border p-2 text-right font-bold">
+                {formatNumber(overallGrandTotals.operationTotal)}
+              </td>
+              <td className="border p-2 text-right font-bold">
+                {formatNumber(overallGrandTotals.targetTotal)}
+              </td>
             </tr>
 
-            {/* เงินกู้ */}
-            <tr>
-              <td className="border p-2 text-left font-bold" colSpan={1}>
-                เงินกู้
-              </td>
-              {uniqueYears.map((year) => {
-                return (
-                  <React.Fragment key={`loan-input-${year}`}>
-                    {Array.from({ length: 6 }).map((_, colIndex) => (
-                      <td key={`loan-cell-${year}-${colIndex}`} className="border p-2">
-                        <input
-                          type="number"
-                          placeholder="0"
-                          className="w-full text-right border px-1"
-                          value={
-                            moneyInputs[year]?.[0]?.[colIndex] !== undefined
-                              ? moneyInputs[year][0][colIndex]
-                              : ""
-                          }
-                          onChange={(e) =>
-                            handleInputChange(
-                              year,
-                              0, // row 0 => เงินกู้
-                              colIndex,
-                              Number(e.target.value)
-                            )
-                          }
-                        />
-                      </td>
-                    ))}
-                    <td className="border p-2"></td>
-                    <td className="border p-2"></td>
-                  </React.Fragment>
-                );
-              })}
-            </tr>
-
-            {/* เงินรายได้ */}
-            <tr>
-              <td className="border p-2 text-left font-bold" colSpan={1}>
-                เงินรายได้
-              </td>
-              {uniqueYears.map((year) => (
-                <React.Fragment key={`rev-input-${year}`}>
-                  {Array.from({ length: 6 }).map((_, colIndex) => (
-                    <td key={`rev-cell-${year}-${colIndex}`} className="border p-2">
-                      <input
-                        type="number"
-                        placeholder="0"
-                        className="w-full text-right border px-1"
-                        value={
-                          moneyInputs[year]?.[1]?.[colIndex] !== undefined
-                            ? moneyInputs[year][1][colIndex]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          handleInputChange(
-                            year,
-                            1, // row 1 => เงินรายได้
-                            colIndex,
-                            Number(e.target.value)
-                          )
-                        }
-                      />
-                    </td>
-                  ))}
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                </React.Fragment>
-              ))}
-            </tr>
-
-            {/* รวม (เงินกู้ + เงินรายได้) */}
-            <tr>
-              <td className="border p-2 text-left font-bold" colSpan={1}>
-                รวม (เงินกู้ + เงินรายได้)
-              </td>
-              {uniqueYears.map((year) => {
-                const dataForYear = moneyInputs[year] || [
-                  [0, 0, 0, 0, 0, 0],
-                  [0, 0, 0, 0, 0, 0],
-                ];
-                return (
-                  <React.Fragment key={`combined-sum-${year}`}>
-                    {Array.from({ length: 6 }).map((_, colIndex) => {
-                      const loanVal = dataForYear[0][colIndex] || 0;
-                      const revenueVal = dataForYear[1][colIndex] || 0;
-                      const combined = loanVal + revenueVal;
-                      return (
-                        <td
-                          key={`combined-${year}-${colIndex}`}
-                          className="border p-2 text-right"
-                        >
-                          {formatNumber(combined)}
-                        </td>
-                      );
-                    })}
-                    <td className="border p-2"></td>
-                    <td className="border p-2"></td>
-                  </React.Fragment>
-                );
-              })}
-            </tr>
+            {/* --- Admin Input Rows --- */}
+            {renderFundRow("เงินกู้ (Admin กรอก)", "loan")}
+            {renderFundRow("เงินรายได้ (Admin กรอก)", "revenue")}
+            {renderSumFundRow()}
           </tbody>
         </table>
-      </div>
-
-      {/* -- 3 Buttons: Approve, Approve & Copy, Reject -- */}
-      <div className="mt-4 flex flex-wrap gap-2 justify-center">
-        <button
-          onClick={handleApprove}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
-        >
-          Approve
-        </button>
-
-        <button
-          onClick={handleApproveAndCopy}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
-        >
-          Approve &amp; Copy
-        </button>
-
-        <button
-          onClick={handleReject}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded"
-        >
-          Reject
-        </button>
       </div>
     </div>
   );

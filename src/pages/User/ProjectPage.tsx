@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import ProjectTable from "../../components/ProjectTable";
-import { getProjectRequests } from "../../apis/ProjectApi";
-import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
+import { getProjectRequests } from "../../apis/UserProjectApi";
+
+interface ProjectFromApi {
+  project_id: number;
+  project_name: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  type: string;
+  subtype: string;
+  owner: string;
+  budget: number;
+}
 
 const ProjectPage = () => {
-  const [projects, setProjects] = useState<ProjectForFrontEnd[]>([]);
+  const [projects, setProjects] = useState<ProjectFromApi[]>([]);
 
   useEffect(() => {
-    getProjectRequests().then((data) => {
-      const processedData = data.map((projectItem: ProjectForFrontEnd) => ({
-        ...projectItem,
-        startDate: new Date(projectItem.startDate), // แปลง string เป็น Date
-        endDate: new Date(projectItem.endDate),
-      }));
-      setProjects(processedData);
+    getProjectRequests().then((response) => {
+      const data = response.data; // สมมติ response = { data: [...] }
+      setProjects(data);
     });
   }, []);
 
