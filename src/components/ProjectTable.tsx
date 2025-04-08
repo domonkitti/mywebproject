@@ -33,6 +33,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
             <th className="text-center border border-gray-400 px-4 py-2">งบประมาณ</th>
             <th className="text-center border border-gray-400 px-4 py-2">สถานะ</th>
             <th className="text-center border border-gray-400 px-4 py-2">แก้ไข</th>
+            <th className="text-center border border-gray-400 px-4 py-2">อนุมัติ</th>
           </tr>
         </thead>
         <tbody>
@@ -59,6 +60,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects }) => {
                   </button>
                 </div>
               </td>
+              <td className="text-center border border-gray-400 px-4 py-2">ยังไม่ผ่าน ผวก.(todo)</td>
             </tr>
           ))}
         </tbody>

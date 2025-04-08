@@ -59,6 +59,7 @@ const ConfirmApprovePage: React.FC = () => {
   const [subtaskSummaries, setSubtaskSummaries] = useState<SubtaskSummary[]>([]);
   const [unionYears, setUnionYears] = useState<number[]>([]);
   const [adminInputs, setAdminInputs] = useState<AdminInputs>({});
+  // For demonstration, set a dummy project name using projectId.
 
   useEffect(() => {
     const fetchData = async () => {
@@ -290,124 +291,143 @@ const ConfirmApprovePage: React.FC = () => {
     );
   };
 
+  // --- Render Admin Fund Row with computed overall totals ---
   const renderFundRow = (label: string, fundType: "loan" | "revenue") => {
-    const previousBalances: number[] = [];
+    let previousBalances: number[] = [];
+    let overallOperation = 0;
+    let overallTarget = 0;
+    const cells = unionYears.map((year, i) => {
+      const fundData = getFundData(year, fundType);
+      const requestCommit = i === 0 ? 0 : previousBalances[i - 1];
+      const reqInvest = fundData.requestInvest || 0;
+      const sumReq = requestCommit + reqInvest;
+      const payCommit = fundData.payCommit || 0;
+      const payInvest = fundData.payInvest || 0;
+      const sumPay = payCommit + payInvest;
+      const cut = fundData.cut || 0;
+      const balance = sumReq - sumPay - cut;
+      previousBalances.push(balance);
+      overallOperation += sumReq;
+      overallTarget += sumPay;
+      return (
+        <React.Fragment key={year}>
+          <td className="border p-3 text-right text-lg">{formatNumber(requestCommit)}</td>
+          <td className="border p-3 text-center">
+            <input
+              type="number"
+              className="border p-2 w-full text-right text-lg"
+              value={fundData.requestInvest || ""}
+              onChange={(e) => handleFundInputChange(year, fundType, "requestInvest", e.target.value)}
+            />
+          </td>
+          <td className="border p-3 text-right font-bold text-lg">{formatNumber(sumReq)}</td>
+          <td className="border p-3 text-center">
+            <input
+              type="number"
+              className="border p-2 w-full text-right text-lg"
+              value={fundData.payCommit || ""}
+              onChange={(e) => handleFundInputChange(year, fundType, "payCommit", e.target.value)}
+            />
+          </td>
+          <td className="border p-3 text-center">
+            <input
+              type="number"
+              className="border p-2 w-full text-right text-lg"
+              value={fundData.payInvest || ""}
+              onChange={(e) => handleFundInputChange(year, fundType, "payInvest", e.target.value)}
+            />
+          </td>
+          <td className="border p-3 text-right font-bold text-lg">{formatNumber(sumPay)}</td>
+          <td className="border p-3 text-center">
+            <input
+              type="number"
+              className="border p-2 w-full text-right text-lg"
+              value={fundData.cut || ""}
+              onChange={(e) => handleFundInputChange(year, fundType, "cut", e.target.value)}
+            />
+          </td>
+        </React.Fragment>
+      );
+    });
+
     return (
       <tr>
-        <td className="border p-2 text-center font-bold">{label}</td>
-        {unionYears.map((year, i) => {
-          const fundData = getFundData(year, fundType);
-          const requestCommit = calcRequestCommit(i, previousBalances);
-          const sumReq = requestCommit + fundData.requestInvest;
-          const sumPay = fundData.payCommit + fundData.payInvest;
-          const balance = sumReq - sumPay - fundData.cut;
-          previousBalances.push(balance);
-          return (
-            <React.Fragment key={year}>
-              <td className="border p-2 text-right">{formatNumber(requestCommit)}</td>
-              <td className="border p-2 text-center">
-                <input
-                  type="number"
-                  className="border p-1 w-full text-right"
-                  value={fundData.requestInvest || ""}
-                  onChange={(e) => handleFundInputChange(year, fundType, "requestInvest", e.target.value)}
-                />
-              </td>
-              <td className="border p-2 text-right font-bold">{formatNumber(sumReq)}</td>
-              <td className="border p-2 text-center">
-                <input
-                  type="number"
-                  className="border p-1 w-full text-right"
-                  value={fundData.payCommit || ""}
-                  onChange={(e) => handleFundInputChange(year, fundType, "payCommit", e.target.value)}
-                />
-              </td>
-              <td className="border p-2 text-center">
-                <input
-                  type="number"
-                  className="border p-1 w-full text-right"
-                  value={fundData.payInvest || ""}
-                  onChange={(e) => handleFundInputChange(year, fundType, "payInvest", e.target.value)}
-                />
-              </td>
-              <td className="border p-2 text-right font-bold">{formatNumber(sumPay)}</td>
-              <td className="border p-2 text-center">
-                <input
-                  type="number"
-                  className="border p-1 w-full text-right"
-                  value={fundData.cut || ""}
-                  onChange={(e) => handleFundInputChange(year, fundType, "cut", e.target.value)}
-                />
-              </td>
-            </React.Fragment>
-          );
-        })}
-        <td className="border p-2 text-right"></td>
-        <td className="border p-2 text-right"></td>
+        <td className="border p-3 text-center font-bold text-lg">{label}</td>
+        {cells}
+        <td className="border p-3 text-right font-bold text-lg">{formatNumber(overallOperation)}</td>
+        <td className="border p-3 text-right font-bold text-lg">{formatNumber(overallTarget)}</td>
       </tr>
     );
   };
 
+  // --- Render Sum Fund Row (combining both loan and revenue) with overall totals ---
   const renderSumFundRow = () => {
+    let previousBalance: number = 0;
+    let overallOperation = 0;
+    let overallTarget = 0;
+    const cells = unionYears.map((year, i) => {
+      const loanData = getFundData(year, "loan");
+      const revenueData = getFundData(year, "revenue");
+      const reqInvest = (loanData.requestInvest || 0) + (revenueData.requestInvest || 0);
+      const requestCommit = i === 0 ? 0 : previousBalance;
+      const sumReq = requestCommit + reqInvest;
+      const payCommit = (loanData.payCommit || 0) + (revenueData.payCommit || 0);
+      const payInvest = (loanData.payInvest || 0) + (revenueData.payInvest || 0);
+      const sumPay = payCommit + payInvest;
+      const cut = (loanData.cut || 0) + (revenueData.cut || 0);
+      const balance = sumReq - sumPay - cut;
+      previousBalance = balance;
+      overallOperation += sumReq;
+      overallTarget += sumPay;
+      return (
+        <React.Fragment key={year}>
+          <td className="border p-3 text-right text-lg">{formatNumber(requestCommit)}</td>
+          <td className="border p-3 text-right text-lg">{formatNumber(reqInvest)}</td>
+          <td className="border p-3 text-right font-bold text-lg">{formatNumber(sumReq)}</td>
+          <td className="border p-3 text-right text-lg">{formatNumber(payCommit)}</td>
+          <td className="border p-3 text-right text-lg">{formatNumber(payInvest)}</td>
+          <td className="border p-3 text-right font-bold text-lg">{formatNumber(sumPay)}</td>
+          <td className="border p-3 text-right text-lg">{formatNumber(cut)}</td>
+        </React.Fragment>
+      );
+    });
+
     return (
       <tr className="bg-gray-50 font-semibold">
-        <td className="border p-2 text-center">รวมเงิน</td>
-        {unionYears.map((year, i) => {
-          const loanData = getFundData(year, "loan");
-          const revenueData = getFundData(year, "revenue");
-          const reqCommit = calcRequestCommit(i, []) + 0; // For simplicity, admin rows do not chain across fund types here.
-          const reqInvest = loanData.requestInvest + revenueData.requestInvest;
-          const sumReq = reqCommit + reqInvest;
-          const payCommit = loanData.payCommit + revenueData.payCommit;
-          const payInvest = loanData.payInvest + revenueData.payInvest;
-          const sumPay = payCommit + payInvest;
-          const cut = loanData.cut + revenueData.cut;
-          return (
-            <React.Fragment key={year}>
-              <td className="border p-2 text-right">{formatNumber(reqCommit)}</td>
-              <td className="border p-2 text-right">{formatNumber(reqInvest)}</td>
-              <td className="border p-2 text-right font-bold">{formatNumber(sumReq)}</td>
-              <td className="border p-2 text-right">{formatNumber(payCommit)}</td>
-              <td className="border p-2 text-right">{formatNumber(payInvest)}</td>
-              <td className="border p-2 text-right font-bold">{formatNumber(sumPay)}</td>
-              <td className="border p-2 text-right">{formatNumber(cut)}</td>
-            </React.Fragment>
-          );
-        })}
-        <td className="border p-2 text-right"></td>
-        <td className="border p-2 text-right"></td>
+        <td className="border p-3 text-center text-lg">รวมเงิน</td>
+        {cells}
+        <td className="border p-3 text-right font-bold text-lg">{formatNumber(overallOperation)}</td>
+        <td className="border p-3 text-right font-bold text-lg">{formatNumber(overallTarget)}</td>
       </tr>
     );
   };
 
-  if (loading) return <p className="text-center">กำลังโหลดข้อมูล...</p>;
+  if (loading) return <p className="text-center text-2xl">กำลังโหลดข้อมูล...</p>;
   if (subtaskSummaries.length === 0)
-    return <p className="text-center text-gray-500">ไม่มีข้อมูล</p>;
-
-  // Total number of columns:
-  // First column for subtask name + (7 columns for each year) + 2 extra overall columns
-  const totalCols = 1 + unionYears.length * 7 + 2;
+    return <p className="text-center text-2xl text-gray-500">ไม่มีข้อมูล</p>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold text-center mb-6">รายละเอียดโครงการ</h2>
-      <div className="overflow-auto">
-        <table className="w-full text-sm border border-collapse min-w-max">
+    <div className="p-6">
+      <h2 className="text-3xl font-bold text-center mb-2">รายละเอียด(งาน/แผนงาน/โครงการ)</h2>
+      {/* Display Project Name below the heading */}
+      <div className="text-center text-2xl mb-4">ชื่อ</div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-lg border border-collapse min-w-max">
           <thead className="bg-gray-100 text-gray-700 text-center">
             {/* Header Row 1 */}
             <tr>
-              <th className="border p-2" rowSpan={3}>
+              <th className="border p-3" rowSpan={3}>
                 งานย่อย
               </th>
               {unionYears.map((year) => (
-                <th key={year} className="border p-2" colSpan={7}>
+                <th key={year} className="border p-3" colSpan={7}>
                   ปี {year}
                 </th>
               ))}
-              <th className="border p-2" rowSpan={3}>
+              <th className="border p-3" rowSpan={3}>
                 รวมดำเนินการทุกปี
               </th>
-              <th className="border p-2" rowSpan={3}>
+              <th className="border p-3" rowSpan={3}>
                 รวมเป้าหมายเบิกจ่ายทุกปี
               </th>
             </tr>
@@ -415,13 +435,13 @@ const ConfirmApprovePage: React.FC = () => {
             <tr>
               {unionYears.map((year) => (
                 <React.Fragment key={`year-${year}`}>
-                  <th className="border p-2" colSpan={3}>
+                  <th className="border p-3" colSpan={3}>
                     วงเงินดำเนินการ
                   </th>
-                  <th className="border p-2" colSpan={3}>
+                  <th className="border p-3" colSpan={3}>
                     เป้าหมายเบิกจ่าย
                   </th>
-                  <th className="border p-2" rowSpan={2}>
+                  <th className="border p-3" rowSpan={2}>
                     ตัดทิ้ง
                   </th>
                 </React.Fragment>
@@ -431,12 +451,12 @@ const ConfirmApprovePage: React.FC = () => {
             <tr>
               {unionYears.map((year) => (
                 <React.Fragment key={`subhead-${year}`}>
-                  <th className="border p-2">ผูกพัน</th>
-                  <th className="border p-2">ลงทุน</th>
-                  <th className="border p-2">รวม</th>
-                  <th className="border p-2">ผูกพัน</th>
-                  <th className="border p-2">ลงทุน</th>
-                  <th className="border p-2">รวม</th>
+                  <th className="border p-3" style={{ width: "120px" }}>ผูกพัน</th>
+                  <th className="border p-3" style={{ width: "120px" }}>ลงทุน</th>
+                  <th className="border p-3" style={{ width: "120px" }}>รวม</th>
+                  <th className="border p-3" style={{ width: "120px" }}>ผูกพัน</th>
+                  <th className="border p-3" style={{ width: "120px" }}>ลงทุน</th>
+                  <th className="border p-3" style={{ width: "120px" }}>รวม</th>
                 </React.Fragment>
               ))}
             </tr>
@@ -444,8 +464,6 @@ const ConfirmApprovePage: React.FC = () => {
           <tbody>
             {/* --- Rows for each subtask --- */}
             {subtaskSummaries.map((summary) => {
-              const totals = calcTotals(summary.tableData, unionYears);
-              // Compute overall sums for this subtask:
               const overallOperation = unionYears.reduce(
                 (acc, year) => acc + summary.tableData[year].operationTotal,
                 0
@@ -456,53 +474,45 @@ const ConfirmApprovePage: React.FC = () => {
               );
               return (
                 <tr key={summary.draftSubtaskId}>
-                  <td className="border p-2 text-left">{summary.subtaskName}</td>
+                  <td className="border p-3 text-left">{summary.subtaskName}</td>
                   {unionYears.map((year) => {
                     const data = summary.tableData[year];
                     return (
                       <React.Fragment key={`data-${year}`}>
-                        <td className="border p-2 text-right">{formatNumber(data.operationCommit)}</td>
-                        <td className="border p-2 text-right">{formatNumber(data.operationInvest)}</td>
-                        <td className="border p-2 text-right font-bold">{formatNumber(data.operationTotal)}</td>
-                        <td className="border p-2 text-right">{formatNumber(data.targetCommit)}</td>
-                        <td className="border p-2 text-right">{formatNumber(data.targetInvest)}</td>
-                        <td className="border p-2 text-right font-bold">{formatNumber(data.targetTotal)}</td>
-                        <td className="border p-2 text-right">{formatNumber(data.cut)}</td>
+                        <td className="border p-3 text-right">{formatNumber(data.operationCommit)}</td>
+                        <td className="border p-3 text-right">{formatNumber(data.operationInvest)}</td>
+                        <td className="border p-3 text-right font-bold">{formatNumber(data.operationTotal)}</td>
+                        <td className="border p-3 text-right">{formatNumber(data.targetCommit)}</td>
+                        <td className="border p-3 text-right">{formatNumber(data.targetInvest)}</td>
+                        <td className="border p-3 text-right font-bold">{formatNumber(data.targetTotal)}</td>
+                        <td className="border p-3 text-right">{formatNumber(data.cut)}</td>
                       </React.Fragment>
                     );
                   })}
-                  <td className="border p-2 text-right font-bold">
-                    {formatNumber(overallOperation)}
-                  </td>
-                  <td className="border p-2 text-right font-bold">
-                    {formatNumber(overallTarget)}
-                  </td>
+                  <td className="border p-3 text-right font-bold">{formatNumber(overallOperation)}</td>
+                  <td className="border p-3 text-right font-bold">{formatNumber(overallTarget)}</td>
                 </tr>
               );
             })}
             {/* --- Overall Summary Row for all subtasks --- */}
             <tr className="bg-gray-100 font-semibold">
-              <td className="border p-2 text-center">รวมทุกงานย่อย</td>
+              <td className="border p-3 text-center">รวมทุกงานย่อย</td>
               {unionYears.map((year) => {
                 const data = overallUnionTotals[year];
                 return (
                   <React.Fragment key={`overall-${year}`}>
-                    <td className="border p-2 text-right">{formatNumber(data.operationCommit)}</td>
-                    <td className="border p-2 text-right">{formatNumber(data.operationInvest)}</td>
-                    <td className="border p-2 text-right font-bold">{formatNumber(data.operationTotal)}</td>
-                    <td className="border p-2 text-right">{formatNumber(data.targetCommit)}</td>
-                    <td className="border p-2 text-right">{formatNumber(data.targetInvest)}</td>
-                    <td className="border p-2 text-right font-bold">{formatNumber(data.targetTotal)}</td>
-                    <td className="border p-2 text-right">{formatNumber(data.cut)}</td>
+                    <td className="border p-3 text-right">{formatNumber(data.operationCommit)}</td>
+                    <td className="border p-3 text-right">{formatNumber(data.operationInvest)}</td>
+                    <td className="border p-3 text-right font-bold">{formatNumber(data.operationTotal)}</td>
+                    <td className="border p-3 text-right">{formatNumber(data.targetCommit)}</td>
+                    <td className="border p-3 text-right">{formatNumber(data.targetInvest)}</td>
+                    <td className="border p-3 text-right font-bold">{formatNumber(data.targetTotal)}</td>
+                    <td className="border p-3 text-right">{formatNumber(data.cut)}</td>
                   </React.Fragment>
                 );
               })}
-              <td className="border p-2 text-right font-bold">
-                {formatNumber(overallGrandTotals.operationTotal)}
-              </td>
-              <td className="border p-2 text-right font-bold">
-                {formatNumber(overallGrandTotals.targetTotal)}
-              </td>
+              <td className="border p-3 text-right font-bold">{formatNumber(overallGrandTotals.operationTotal)}</td>
+              <td className="border p-3 text-right font-bold">{formatNumber(overallGrandTotals.targetTotal)}</td>
             </tr>
 
             {/* --- Admin Input Rows --- */}
@@ -511,6 +521,20 @@ const ConfirmApprovePage: React.FC = () => {
             {renderSumFundRow()}
           </tbody>
         </table>
+        <div className="mt-4 flex flex-wrap gap-4 justify-center">
+          <button className="px-4 py-2 bg-blue-500 text-white rounded">
+            เช็ครายละเอียดส่วนอื่่น
+          </button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded">
+            approve
+          </button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded">
+            reject
+          </button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded">
+            คัดลอกไป 9 ช่อง
+          </button>
+        </div>
       </div>
     </div>
   );

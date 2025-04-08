@@ -127,7 +127,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                       location.pathname === "/changed" ? "text-blue-600 bg-gray-200" : "text-black"
                     }`}
                   >
-                    📜 <span className="ml-3">เปลี่ยนแปลงงบ</span>
+                    📜 <span className="ml-3">เปลี่ยนแปลงงบ(excel)</span>
                   </a>
                 </li>
               </ul>
@@ -154,26 +154,8 @@ function Sidebar({ isSidebarOpen, toggleSidebar }: SidebarProps) {
                     📜 <span className="ml-3">9ช่อง</span>
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/waitingprojects"
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/waitingprojects" ? "text-blue-600 bg-gray-200" : "text-black"
-                    }`}
-                  >
-                    📜 <span className="ml-3">waitingprojects</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/Settings"
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 ${
-                      location.pathname === "/Settings" ? "text-blue-600 bg-gray-200" : "text-black"
-                    }`}
-                  >
-                    ⚙️ <span className="ml-3">Settings</span>
-                  </a>
-                </li>
+                
+              
               </ul>
             )}
           </div>

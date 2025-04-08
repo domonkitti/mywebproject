@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button, Table } from "flowbite-react";
+import { Table } from "flowbite-react";
 import { getReviewedProjects } from "../../apis/UserProjectApi";
 import { ProjectForFrontEnd } from "../../interfaces/MainInterface";
-import dayjs from "dayjs";
-import { HiEye } from "react-icons/hi";
-
-const formatDate = (date: Date | string) => dayjs(date).format("DD/MM/YYYY");
 
 const WaitingProjectPage = () => {
   const [projects, setProjects] = useState<ProjectForFrontEnd[]>([]);
@@ -16,14 +12,9 @@ const WaitingProjectPage = () => {
       try {
         setIsLoading(true);
         const data = await getReviewedProjects();
-
-        console.log("Raw API Response:", data);
-
-        const filteredData = data
-          .filter((proj: ProjectForFrontEnd) => proj.status === "รอดำเนินการ")
-          .map((proj: ProjectForFrontEnd) => ({ ...proj }));
-
-        console.log("Filtered Projects:", filteredData);
+        const filteredData = data.filter(
+          (proj: ProjectForFrontEnd) => proj.status === "รอดำเนินการ"
+        );
         setProjects(filteredData);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -35,40 +26,14 @@ const WaitingProjectPage = () => {
     fetchProjects();
   }, []);
 
-  // Sum the total budgetAllocated across all years of a single project
-  const getTotalAllocated = (project: ProjectForFrontEnd) => {
-    if (!project.budgetPlan) return 0;
-    return project.budgetPlan.reduce((total, bp) => {
-      const { ผูกพัน, ลงทุน } = bp.budgetAllocated || {};
-      const sumผูกพัน = (ผูกพัน?.เงินกู้ || 0) + (ผูกพัน?.เงินรายได้ || 0);
-      const sumลงทุน = (ลงทุน?.เงินกู้ || 0) + (ลงทุน?.เงินรายได้ || 0);
-      return total + sumผูกพัน + sumลงทุน;
-    }, 0);
-  };
-
-  // Sum the budgetUsage for year 2569 in a single project
-  const getTarget2569 = (project: ProjectForFrontEnd) => {
-    if (!project.budgetPlan) return 0;
-    const bp2569 = project.budgetPlan.find((bp) => bp.year === 2569);
-    if (!bp2569) return 0; // no plan for year 2569 => show 0
-
-    const { ผูกพัน, ลงทุน } = bp2569.budgetUsage || {};
-    const sumผูกพัน = (ผูกพัน?.เงินกู้ || 0) + (ผูกพัน?.เงินรายได้ || 0);
-    const sumลงทุน = (ลงทุน?.เงินกู้ || 0) + (ลงทุน?.เงินรายได้ || 0);
-    return sumผูกพัน + sumลงทุน;
-  };
-
-  // 🔹 Compute grand totals across *all* projects:
-  const grandTotalBudget = projects.reduce(
-    (acc, p) => acc + getTotalAllocated(p), 0
-  );
-  const grandTotal2569 = projects.reduce(
-    (acc, p) => acc + getTarget2569(p), 0
-  );
+  const formatNumber = (num?: number) =>
+    num && num !== 0 ? num.toLocaleString() : "-";
 
   return (
     <div className="overflow-x-auto">
-      <h1 className="text-2xl font-bold text-center mb-10">โครงการที่รอดำเนินการ</h1>
+      <h1 className="text-2xl font-bold text-center mb-10">
+        รายงานสรุปงบประมาณที่ขอตั้งปี 2569
+      </h1>
 
       {isLoading ? (
         <p className="text-center text-gray-500">กำลังโหลดข้อมูล...</p>
@@ -76,67 +41,96 @@ const WaitingProjectPage = () => {
         <p className="text-center text-gray-500">ไม่มีโครงการที่รอดำเนินการ</p>
       ) : (
         <Table striped>
-          {/* Table Header */}
           <Table.Head className="bg-gray-100 text-gray-700">
-            <Table.HeadCell className="text-center">ชื่อโครงการ</Table.HeadCell>
-            <Table.HeadCell className="text-center">หน่วยงาน</Table.HeadCell>
-            <Table.HeadCell className="text-center">งบประมาณ</Table.HeadCell>
-            <Table.HeadCell className="text-center">เป้าหมายเบิกจ่าย 2569</Table.HeadCell>
-            <Table.HeadCell className="text-center">Action</Table.HeadCell>
+            <Table.HeadCell rowSpan={3} className="text-center">
+              งาน/แผนงาน
+            </Table.HeadCell>
+            <Table.HeadCell colSpan={4} className="text-center">
+              วงเงินขอตั้ง
+            </Table.HeadCell>
+            <Table.HeadCell colSpan={4} className="text-center">
+              เป้าหมายเบิกจ่าย
+            </Table.HeadCell>
+            <Table.HeadCell rowSpan={2} className="text-center">
+              หน่วยงาน
+            </Table.HeadCell>
+          </Table.Head>
+          <Table.Head className="bg-gray-100 text-gray-700">
+            {["","เงินกู้ในประเทศ", "เงินรายได้", "เงินสมทบจากผู้ใช้ไฟ", "รวม"].map((label, idx) => (
+              <Table.HeadCell key={`allocated-${idx}`} className="text-center">
+                {label}
+              </Table.HeadCell>
+            ))}
+            {["เงินกู้ในประเทศ", "เงินรายได้", "เงินสมทบจากผู้ใช้ไฟ", "รวม",""].map((label, idx) => (
+              <Table.HeadCell key={`usage-${idx}`} className="text-center">
+                {label}
+              </Table.HeadCell>
+            ))}
           </Table.Head>
 
           <Table.Body className="divide-y border border-gray-400">
-            {/* 🔹 Sum row at the TOP (below the header) */}
-            <Table.Row className="bg-gray-50 font-semibold">
-              <Table.Cell className="text-center border border-gray-400 px-4" colSpan={2}>
-                รวมทั้งหมด
-              </Table.Cell>
-              {/* Grand total งบประมาณ */}
-              <Table.Cell className="text-right border border-gray-400 px-4">
-                {grandTotalBudget.toLocaleString()} บาท
-              </Table.Cell>
-              {/* Grand total เป้าหมายเบิกจ่าย 2569 */}
-              <Table.Cell className="text-right border border-gray-400 px-4">
-                {grandTotal2569.toLocaleString()} บาท
-              </Table.Cell>
-              <Table.Cell className="border border-gray-400 px-4"></Table.Cell>
-            </Table.Row>
-
-            {/* 🔹 Now map the individual rows for each project */}
             {projects.map((project) => {
-              const totalAllocated = getTotalAllocated(project);
-              const target2569 = getTarget2569(project);
+              const year2569 = project.budgetPlan.find(
+                (bp) => bp.year === 2569
+              );
+
+              const budgetAllocated = year2569?.budgetAllocated || {};
+              const budgetUsage = year2569?.budgetUsage || {};
+
+              const allocatedTotal =
+                (budgetAllocated.ผูกพัน?.["เงินกู้"] || 0) +
+                (budgetAllocated.ผูกพัน?.["เงินรายได้"] || 0) +
+                (budgetAllocated.ลงทุน?.["เงินกู้"] || 0) +
+                (budgetAllocated.ลงทุน?.["เงินรายได้"] || 0);
+
+              const usageTotal =
+                (budgetUsage.ผูกพัน?.["เงินกู้"] || 0) +
+                (budgetUsage.ผูกพัน?.["เงินรายได้"] || 0) +
+                (budgetUsage.ลงทุน?.["เงินกู้"] || 0) +
+                (budgetUsage.ลงทุน?.["เงินรายได้"] || 0);
 
               return (
-                <Table.Row key={project.projectId} className="border border-gray-400">
+                <Table.Row key={project.projectId}>
                   <Table.Cell className="text-left border border-gray-400 px-4">
                     {project.projectName}
                   </Table.Cell>
-                  <Table.Cell className="text-left border border-gray-400 px-4">
-                    {project.departmentName}
-                  </Table.Cell>
 
-                  {/* งบประมาณ => sum of all years' allocated */}
+                  {/* วงเงินขอตั้ง */}
                   <Table.Cell className="text-right border border-gray-400 px-4">
-                    {totalAllocated.toLocaleString()} บาท
+                    {formatNumber(budgetAllocated.ผูกพัน?.["เงินกู้"])}
                   </Table.Cell>
-
-                  {/* เป้าหมายเบิกจ่าย 2569 */}
                   <Table.Cell className="text-right border border-gray-400 px-4">
-                    {target2569.toLocaleString()} บาท
+                    {formatNumber(budgetAllocated.ผูกพัน?.["เงินรายได้"])}
+                  </Table.Cell>
+                  <Table.Cell className="text-right border border-gray-400 px-4">
+                    {formatNumber(
+                      (budgetAllocated.ลงทุน?.["เงินกู้"] || 0) +
+                        (budgetAllocated.ลงทุน?.["เงินรายได้"] || 0)
+                    )}
+                  </Table.Cell>
+                  <Table.Cell className="text-right border border-gray-400 px-4 font-semibold">
+                    {formatNumber(allocatedTotal)}
                   </Table.Cell>
 
-                  {/* Action buttons */}
+                  {/* เป้าหมายเบิกจ่าย */}
+                  <Table.Cell className="text-right border border-gray-400 px-4">
+                    {formatNumber(budgetUsage.ผูกพัน?.["เงินกู้"])}
+                  </Table.Cell>
+                  <Table.Cell className="text-right border border-gray-400 px-4">
+                    {formatNumber(budgetUsage.ผูกพัน?.["เงินรายได้"])}
+                  </Table.Cell>
+                  <Table.Cell className="text-right border border-gray-400 px-4">
+                    {formatNumber(
+                      (budgetUsage.ลงทุน?.["เงินกู้"] || 0) +
+                        (budgetUsage.ลงทุน?.["เงินรายได้"] || 0)
+                    )}
+                  </Table.Cell>
+                  <Table.Cell className="text-right border border-gray-400 px-4 font-semibold">
+                    {formatNumber(usageTotal)}
+                  </Table.Cell>
+
                   <Table.Cell className="text-center border border-gray-400 px-4">
-                    <button className="bg-blue-200 px-2 py-1 rounded mr-2 hover:bg-blue-300">
-                      ให้หน่วยงานแก้ไข
-                    </button>
-                    <button className="bg-yellow-200 px-2 py-1 rounded mr-2 hover:bg-yellow-300">
-                      แก้ไขเอง
-                    </button>
-                    <button className="bg-green-200 px-2 py-1 rounded hover:bg-green-300">
-                      ดูรายละเอียด
-                    </button>
+                    {project.departmentName}
                   </Table.Cell>
                 </Table.Row>
               );
@@ -144,12 +138,6 @@ const WaitingProjectPage = () => {
           </Table.Body>
         </Table>
       )}
-      <div className="mt-6 border-t pt-4">
-          <button
-            className="bg-blue-600 text-white px-20 py-2 rounded hover:bg-green-700">
-            กงป.เพิ่มงานเองแบบไม่มีรายละเอียด
-          </button>       
-      </div>
     </div>
   );
 };

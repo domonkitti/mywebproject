@@ -252,7 +252,7 @@ const BudgetSummaryBySubtask: React.FC<Props> = ({ projectId }) => {
   return (
     <div className="mt-8">
       <h2 className="text-lg font-bold mb-4">
-        สรุปภาพรวมงบประมาณและการเบิกจ่าย (รวมงานย่อยทั้งหมดในตารางเดียว)
+        สรุปภาพรวมงบประมาณและการเบิกจ่าย
       </h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse border border-gray-400 min-w-max">
